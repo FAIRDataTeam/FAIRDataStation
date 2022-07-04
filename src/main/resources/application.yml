@@ -1,0 +1,31 @@
+data-station:
+  fdp-url: http://fdp
+
+spring:
+  application:
+    name: fair-data-station
+  main:
+    banner-mode: off
+    web-application-type: reactive
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+
+management:
+  health:
+    solr:
+      enabled:  false
+  info:
+    defaults:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health, info, gateway
+      cors:
+        allowed-origins: "*"
+        allowed-methods: "GET"
