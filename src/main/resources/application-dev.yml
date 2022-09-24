@@ -1,2 +1,8 @@
 data-station:
   fdp-url: http://localhost:8088
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost/fds
+    username: postgres
+    password: password

@@ -7,6 +7,17 @@ spring:
   main:
     banner-mode: off
     web-application-type: reactive
+  datasource:
+    url: jdbc:postgresql://postgres/fds
+    username: postgres
+    password: password
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    properties:
+      hibernate:
+        ddl-auto: validate
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   cloud:
     gateway:
       globalcors:
@@ -14,6 +25,12 @@ spring:
           '[/**]':
             allowedOrigins: "*"
             allowedMethods: "*"
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
 
 management:
   health:

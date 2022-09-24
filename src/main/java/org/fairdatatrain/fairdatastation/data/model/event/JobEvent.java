@@ -20,18 +20,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.data.model.event;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.fairdatatrain.fairdatastation.data.model.base.BaseEntity;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
+@Entity(name = "JobEvent")
+@Table(name = "job_event")
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder(toBuilder = true)
+public class JobEvent extends BaseEntity {
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "result_status", columnDefinition = "job_status")
+    private JobStatus resultStatus;
+
+    @NotNull
+    @Column(name = "occurred_at", nullable = false)
+    private Timestamp occurredAt;
+
+    @NotNull
+    @Column(name = "message", nullable = false)
+    private String message;
+
+    @NotNull
+    @ManyToOne
+    @JoinColumn(name = "job_id", nullable = false)
+    private Job job;
 }
