@@ -20,18 +20,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.api.dto.root;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.*;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class RootInfoDTO {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
+    private String fdpEndpoint;
 
+    private String trainEndpoint;
 }

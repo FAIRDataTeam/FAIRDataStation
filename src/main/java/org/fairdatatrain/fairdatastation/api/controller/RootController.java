@@ -20,18 +20,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.api.controller;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.fairdatatrain.fairdatastation.api.dto.root.RootInfoDTO;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+@Tag(name = "Train Handling")
+@RestController
+@RequestMapping("")
+@RequiredArgsConstructor
+public class RootController {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    @GetMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
+    public RootInfoDTO getRootInfo(ServerHttpRequest serverHttpRequest) {
+        String baseUrl = serverHttpRequest.getURI().toString();
+        return RootInfoDTO.builder()
+                .fdpEndpoint(baseUrl + "fdp")
+                .trainEndpoint(baseUrl + "trains")
+                .build();
     }
-
 }

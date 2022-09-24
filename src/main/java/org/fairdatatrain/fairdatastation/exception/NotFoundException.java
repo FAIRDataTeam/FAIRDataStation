@@ -20,18 +20,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.exception;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+import java.util.Map;
+import java.util.UUID;
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+@AllArgsConstructor
+@Getter
+public class NotFoundException extends Exception {
+
+    private final String entityName;
+
+    private final Map<String, String> fields;
+
+    public NotFoundException(String entityName, UUID uuid) {
+        this.entityName = entityName;
+        this.fields = Map.of("uuid", uuid.toString());
     }
-
 }

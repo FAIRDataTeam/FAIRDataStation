@@ -20,18 +20,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.service.event.job.event;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import org.fairdatatrain.fairdatastation.api.dto.event.job.event.JobEventDTO;
+import org.fairdatatrain.fairdatastation.data.model.event.JobEvent;
+import org.springframework.stereotype.Component;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+@Component
+public class JobEventMapper {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    public JobEventDTO toDTO(JobEvent jobEvent) {
+        return JobEventDTO
+                .builder()
+                .uuid(jobEvent.getUuid())
+                .resultStatus(jobEvent.getResultStatus())
+                .message(jobEvent.getMessage())
+                .occurredAt(jobEvent.getOccurredAt().toInstant())
+                .createdAt(jobEvent.getCreatedAt().toInstant())
+                .updatedAt(jobEvent.getUpdatedAt().toInstant())
+                .build();
     }
-
 }

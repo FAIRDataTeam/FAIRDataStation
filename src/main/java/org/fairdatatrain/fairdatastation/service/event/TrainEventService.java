@@ -20,18 +20,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.service.event;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
+import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchResponseDTO;
+import org.springframework.stereotype.Service;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class TrainEventService {
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
+    public TrainDispatchResponseDTO acceptTrain(TrainDispatchPayloadDTO reqDto) {
+        // TODO: create job and initiate work (async/scheduled)
+        // work (send event before/after each):
+        // - validate
+        // - access control
+        // - run with specific storage
+        // - create resulting artifact and finalize
+        return null;
     }
-
 }

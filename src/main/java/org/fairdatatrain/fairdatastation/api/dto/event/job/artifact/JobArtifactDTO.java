@@ -20,18 +20,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation;
+package org.fairdatatrain.fairdatastation.api.dto.event.job.artifact;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.*;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
-public class Application {
+import java.time.Instant;
+import java.util.UUID;
 
-    public static void main(String[] args) {
-        SpringApplication.run(Application.class, args);
-    }
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder(toBuilder = true)
+public class JobArtifactDTO {
 
+    private UUID uuid;
+
+    private String displayName;
+
+    private String filename;
+
+    private Long bytesize;
+
+    private String contentType;
+
+    private String hash;
+
+    private Instant occurredAt;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 }
