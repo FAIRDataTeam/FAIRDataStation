@@ -40,7 +40,7 @@
 		<!-- plugins -->
 		<plugin.license.version>4.1</plugin.license.version>
 		<plugin.checkstyle.version>3.2.0</plugin.checkstyle.version>
-		<plugin.spotbugs.version>4.7.1.1</plugin.spotbugs.version>
+		<plugin.spotbugs.version>4.7.2.0</plugin.spotbugs.version>
 		<plugin.git_commit_id.version>5.0.0</plugin.git_commit_id.version>
 
 		<!-- override for security -->
