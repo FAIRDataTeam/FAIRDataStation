@@ -23,8 +23,16 @@
 package org.fairdatatrain.fairdatastation.service.event.job.artifact;
 
 import org.fairdatatrain.fairdatastation.api.dto.event.job.artifact.JobArtifactDTO;
+import org.fairdatatrain.fairdatastation.api.dto.event.job.artifact.JobArtifactDispatchDTO;
+import org.fairdatatrain.fairdatastation.data.model.enums.ArtifactStorage;
+import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.model.event.JobArtifact;
 import org.springframework.stereotype.Component;
+
+import java.sql.Timestamp;
+import java.util.Base64;
+
+import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
 
 @Component
 public class JobArtifactMapper {
@@ -41,6 +49,43 @@ public class JobArtifactMapper {
                 .occurredAt(jobArtifact.getOccurredAt().toInstant())
                 .createdAt(jobArtifact.getCreatedAt().toInstant())
                 .updatedAt(jobArtifact.getUpdatedAt().toInstant())
+                .build();
+    }
+
+    public JobArtifact create(Job job, String displayName, String filename, String contentType,
+                              byte[] data, String hash) {
+        final Timestamp now = now();
+        return JobArtifact
+                .builder()
+                .job(job)
+                .displayName(displayName)
+                .filename(filename)
+                .contentType(contentType)
+                .data(data)
+                .storage(ArtifactStorage.POSTGRES)
+                .bytesize((long) data.length)
+                .hash(hash)
+                .delivered(false)
+                .tries(0)
+                .nextDispatchAt(now)
+                .occurredAt(now)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    public JobArtifactDispatchDTO toDispatchDTO(JobArtifact artifact) {
+        return JobArtifactDispatchDTO
+                .builder()
+                .remoteId(artifact.getJob().getUuid().toString())
+                .secret(artifact.getJob().getSecret())
+                .displayName(artifact.getDisplayName())
+                .filename(artifact.getFilename())
+                .bytesize(artifact.getBytesize())
+                .hash(artifact.getHash())
+                .contentType(artifact.getContentType())
+                .base64data(Base64.getEncoder().encodeToString(artifact.getData()))
+                .occurredAt(artifact.getOccurredAt().toInstant())
                 .build();
     }
 }

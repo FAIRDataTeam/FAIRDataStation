@@ -62,15 +62,13 @@ public class CorsFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        Mono<Void> mono = chain.filter(exchange);
-
-        HttpHeaders headers = exchange.getResponse().getHeaders();
+        final HttpHeaders headers = exchange.getResponse().getHeaders();
         headers.add(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
         headers.add(HttpHeaders.ALLOW, ALLOWED_METHODS);
         headers.add(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, ALLOWED_METHODS);
         headers.add(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, ALLOWED_HEADERS);
         headers.add(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, EXPOSED_HEADERS);
 
-        return mono;
+        return chain.filter(exchange);
     }
 }

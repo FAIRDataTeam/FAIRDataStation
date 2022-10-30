@@ -30,7 +30,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
 
 @Tag(name = "Train Handling")
 @RestController
@@ -40,7 +39,7 @@ public class RootController {
 
     @GetMapping(path = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public RootInfoDTO getRootInfo(ServerHttpRequest serverHttpRequest) {
-        String baseUrl = serverHttpRequest.getURI().toString();
+        final String baseUrl = serverHttpRequest.getURI().toString();
         return RootInfoDTO.builder()
                 .fdpEndpoint(baseUrl + "fdp")
                 .trainEndpoint(baseUrl + "trains")

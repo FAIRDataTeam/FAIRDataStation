@@ -22,5 +22,25 @@
  */
 package org.fairdatatrain.fairdatastation.api.dto.event.train;
 
+import lombok.*;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
+
+import javax.validation.constraints.NotNull;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+@Builder(toBuilder = true)
 public class TrainDispatchResponseDTO {
+
+    @NotNull
+    private String id;
+
+    @NotNull
+    private String message;
+
+    @NotNull
+    private JobStatus status;
+
 }

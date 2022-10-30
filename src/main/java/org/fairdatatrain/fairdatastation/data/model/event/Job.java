@@ -61,6 +61,15 @@ public class Job extends BaseEntity {
     @Column(name = "finished_at")
     private Timestamp finishedAt;
 
+    @Column(name = "callback_event")
+    private String callbackEvent;
+
+    @Column(name = "callback_artifact")
+    private String callbackArtifact;
+
+    @Column(name = "train_uri")
+    private String trainUri;
+
     @Column(name = "version", nullable = false)
     private Long version;
 

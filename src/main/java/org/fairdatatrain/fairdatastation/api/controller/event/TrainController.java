@@ -29,8 +29,11 @@ import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchRespon
 import org.fairdatatrain.fairdatastation.service.event.TrainEventService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @Tag(name = "Trains")
 @RestController
@@ -38,14 +41,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TrainController {
 
-    private TrainEventService trainEventService;
+    private final TrainEventService trainEventService;
 
     @PostMapping(
             path = "",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public TrainDispatchResponseDTO acceptTrain(TrainDispatchPayloadDTO reqDto) {
+    public TrainDispatchResponseDTO acceptTrain(
+            @Valid @RequestBody TrainDispatchPayloadDTO reqDto
+    ) {
+        // TODO: check/store origin? filtering?
         return trainEventService.acceptTrain(reqDto);
     }
 }

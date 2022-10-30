@@ -1,11 +1,15 @@
-INSERT INTO public.job (uuid, secret, remote_id, status, started_at, finished_at, created_at,
-                        updated_at, version)
+INSERT INTO public.job (uuid, secret, remote_id, status, started_at, finished_at,
+                        callback_event, callback_artifact, train_uri,
+                        created_at, updated_at, version)
 VALUES ('633879bd-df36-4c93-b455-6b9a56321771', 'verySecret', 'someRemoteId', 'FINISHED', '2022-04-09 21:10:43.000000',
-        '2022-04-09 22:03:47.000000', '2022-04-09 21:09:07.000000', '2022-04-09 21:09:07.000000', 0);
-INSERT INTO public.job (uuid, secret, remote_id, status, started_at, finished_at, created_at,
-                        updated_at, version)
+        '2022-04-09 22:03:47.000000', 'https://example.com/events', 'https://example.com/artifacts',
+        'https://example.com/trains/x', '2022-04-09 21:09:07.000000', '2022-04-09 21:09:07.000000', 0);
+INSERT INTO public.job (uuid, secret, remote_id, status, started_at, finished_at,
+                        callback_event, callback_artifact, train_uri,
+                        created_at, updated_at, version)
 VALUES ('0f8fa3ca-02b6-4cd3-b346-93b156166554', 'anotherSecret', 'anotherRemoteId', 'FINISHED',
-        '2022-04-09 21:15:40.000000', '2022-04-09 21:56:44.000000', '2022-04-09 21:09:56.000000',
+        '2022-04-09 21:15:40.000000', '2022-04-09 21:56:44.000000', 'https://example.com/events',
+        'https://example.com/artifacts', 'https://example.com/trains/y', '2022-04-09 21:09:56.000000',
         '2022-04-09 21:09:56.000000', 7);
 
 INSERT INTO public.job_event (uuid, result_status, occurred_at, message, job_id, created_at, updated_at)

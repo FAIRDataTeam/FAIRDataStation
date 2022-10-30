@@ -26,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.JobDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.JobSimpleDTO;
+import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
 import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.repository.event.JobRepository;
 import org.fairdatatrain.fairdatastation.exception.NotFoundException;
@@ -65,5 +67,20 @@ public class JobService {
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public JobDTO getJob(UUID jobUuid) throws NotFoundException {
         return jobMapper.toDTO(getByIdOrThrow(jobUuid));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Job createJobForTrain(TrainDispatchPayloadDTO reqDto) {
+        final Job job = jobMapper.fromTrainDispatchPayloadDTO(reqDto);
+        return jobRepository.saveAndFlush(job);
+    }
+
+    public Optional<Job> getNextJob() {
+        // TODO: priority?
+        return jobRepository.findFirstByFinishedAtIsNullOrderByCreatedAtAsc();
+    }
+
+    public void updateStatus(Job job, JobStatus status) {
+        jobRepository.saveAndFlush(jobMapper.updateStatus(job, status));
     }
 }
