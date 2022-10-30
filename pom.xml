@@ -37,13 +37,15 @@
 		<spring-cloud.version>2021.0.5</spring-cloud.version>
 		<lombok.version>1.18.24</lombok.version>
 		<springdoc.version>1.6.9</springdoc.version>
-		<postgresql.version>42.4.0</postgresql.version>
+		<postgresql.version>42.4.1</postgresql.version>
+		<rdf4j.version>4.2.1</rdf4j.version>
 
 		<!-- plugins -->
 		<plugin.license.version>4.1</plugin.license.version>
 		<plugin.checkstyle.version>3.2.0</plugin.checkstyle.version>
 		<plugin.spotbugs.version>4.7.3.0</plugin.spotbugs.version>
 		<plugin.git_commit_id.version>5.0.0</plugin.git_commit_id.version>
+		<plugin.rdf4j_generator.version>0.2.0</plugin.rdf4j_generator.version>
 
 		<!-- override for security -->
 		<snakeyaml.version>1.31</snakeyaml.version>
@@ -93,6 +95,23 @@
 			<version>${lombok.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-runtime</artifactId>
+			<version>${rdf4j.version}</version>
+			<type>pom</type>
+			<exclusions>
+				<exclusion>
+					<groupId>ch.qos.logback</groupId>
+					<artifactId>logback-classic</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.rdf4j</groupId>
+			<artifactId>rdf4j-rio-api</artifactId>
+			<version>${rdf4j.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.flywaydb</groupId>
@@ -223,6 +242,29 @@
 					<generateGitPropertiesFile>true</generateGitPropertiesFile>
 					<generateGitPropertiesFilename>${project.build.outputDirectory}/META-INF/git.properties</generateGitPropertiesFilename>
 					<commitIdGenerationMode>full</commitIdGenerationMode>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.kburger</groupId>
+				<artifactId>rdf4j-generator-maven-plugin</artifactId>
+				<version>${plugin.rdf4j_generator.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<package>nl.dtls.fairdatapoint.vocabulary</package>
+					<addGeneratedAnnotation>false</addGeneratedAnnotation>
+					<vocabularies>
+						<vocabulary>
+							<url>https://raw.githubusercontent.com/FAIRDataTeam/FDT-O/778dcc29d54608fc942eb6b3260e9667a6227edc/fdt-ontology.owl</url>
+							<namespace>https://w3id.org/fdt/fdt-o#</namespace>
+							<prefix>fdt</prefix>
+						</vocabulary>
+					</vocabularies>
 				</configuration>
 			</plugin>
 		</plugins>

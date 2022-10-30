@@ -25,6 +25,8 @@ package org.fairdatatrain.fairdatastation.service.event.job;
 import lombok.RequiredArgsConstructor;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.JobDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.JobSimpleDTO;
+import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
 import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.service.event.job.artifact.JobArtifactMapper;
 import org.fairdatatrain.fairdatastation.service.event.job.event.JobEventMapper;
@@ -32,6 +34,8 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
 import java.util.Optional;
+
+import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
 
 @Component
 @RequiredArgsConstructor
@@ -101,5 +105,34 @@ public class JobMapper {
                 .updatedAt(job.getUpdatedAt().toInstant())
                 .version(job.getVersion())
                 .build();
+    }
+
+    public Job fromTrainDispatchPayloadDTO(TrainDispatchPayloadDTO reqDto) {
+        final Timestamp now = now();
+        return Job
+                .builder()
+                .secret(reqDto.getSecret())
+                .remoteId(reqDto.getJobUuid())
+                .status(JobStatus.QUEUED)
+                .startedAt(null)
+                .finishedAt(null)
+                .callbackEvent(reqDto.getCallbackEventLocation())
+                .callbackArtifact(reqDto.getCallbackArtifactLocation())
+                .trainUri(reqDto.getTrainUri())
+                .version(0L)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    public Job updateStatus(Job job, JobStatus status) {
+        final Timestamp now = now();
+        job.setStatus(status);
+        job.setUpdatedAt(now);
+        if (status.equals(JobStatus.FAILED) || status.equals(JobStatus.FINISHED)) {
+            // TODO: list "terminal" states
+            job.setFinishedAt(now);
+        }
+        return job;
     }
 }

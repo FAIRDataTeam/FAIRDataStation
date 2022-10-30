@@ -26,20 +26,34 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchResponseDTO;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
+import org.fairdatatrain.fairdatastation.data.model.event.Job;
+import org.fairdatatrain.fairdatastation.service.event.job.JobService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TrainEventService {
 
+    private final JobService jobService;
+
+    @Transactional(propagation = Propagation.REQUIRED)
     public TrainDispatchResponseDTO acceptTrain(TrainDispatchPayloadDTO reqDto) {
-        // TODO: create job and initiate work (async/scheduled)
+        // TODO: validate before creating a job
+        final Job job = jobService.createJobForTrain(reqDto);
         // work (send event before/after each):
         // - validate
         // - access control
         // - run with specific storage
         // - create resulting artifact and finalize
-        return null;
+        return TrainDispatchResponseDTO
+                .builder()
+                .id(job.getUuid().toString())
+                .message("Train queued for processing...")
+                .status(JobStatus.QUEUED)
+                .build();
     }
 }

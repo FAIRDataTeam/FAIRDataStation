@@ -24,10 +24,16 @@ package org.fairdatatrain.fairdatastation;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableAsync
+@EnableScheduling
 @SpringBootApplication
 @ComponentScan(basePackages = "org.fairdatatrain.fairdatastation.*")
+@ConfigurationPropertiesScan("org.fairdatatrain.fairdatastation.config.*")
 public class Application {
 
     public static void main(String[] args) {

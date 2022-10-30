@@ -1,9 +1,29 @@
 data-station:
   fdp-url: http://fdp
+  storages:
+    triple-store:
+      # valid repository type options {1 = inMemoryStore, 2 = NativeStore, 3 = AllegroGraph, 4 = graphDB, 5 = blazegraph}
+      type: 1
+      native:
+        dir: /tmp/fdp-store/
+      agraph:
+        url: http://localhost:10035/repositories/fdp
+        username: user
+        password: password
+      graphDb:
+        url: http://localhost:7200
+        repository: test
+      blazegraph:
+        url: http://localhost:8888/blazegraph
+        repository:
 
 spring:
   application:
     name: fair-data-station
+  task:
+    scheduling:
+      pool:
+        size: 2
   main:
     banner-mode: off
     web-application-type: reactive

@@ -26,6 +26,10 @@ import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.repository.base.BaseRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface JobRepository extends BaseRepository<Job> {
+
+    Optional<Job> findFirstByFinishedAtIsNullOrderByCreatedAtAsc();
 }

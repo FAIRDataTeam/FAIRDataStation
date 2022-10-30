@@ -59,4 +59,19 @@ public class JobEvent extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "job_id", nullable = false)
     private Job job;
+
+    // TODO: delivery details (extract?)
+    @NotNull
+    @Column(name = "delivered", nullable = false)
+    private Boolean delivered;
+
+    @Column(name = "last_error")
+    private String lastError;
+
+    @Column(name = "next_dispatch_at")
+    private Timestamp nextDispatchAt;
+
+    @NotNull
+    @Column(name = "tries")
+    private Integer tries;
 }

@@ -4,7 +4,6 @@
         "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <module name="Checker">
-
     <metadata name="org.checkstyle.principle" value="Practice What You Preach"/>
     <metadata name="org.checkstyle.principle.description"
               value="In our config we should use all Checks that Checkstyle has"/>
@@ -12,6 +11,12 @@
     <property name="severity" value="error"/>
 
     <property name="fileExtensions" value="java, properties, xml, vm, g, g4, dtd"/>
+
+    <module name="SuppressWithPlainTextCommentFilter">
+        <property name="offCommentFormat" value="// CHECKSTYLE\.OFF\: ([\w\|]+)"/>
+        <property name="onCommentFormat" value="// CHECKSTYLE\.ON\: ([\w\|]+)"/>
+        <property name="checkFormat" value="$1"/>
+    </module>
 
     <!-- BeforeExecutionFileFilters is required for sources that are based on java9 -->
     <module name="BeforeExecutionExclusionFileFilter">

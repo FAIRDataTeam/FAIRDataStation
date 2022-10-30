@@ -23,9 +23,9 @@
 package org.fairdatatrain.fairdatastation.api.dto.event.train;
 
 import lombok.*;
+import org.fairdatatrain.fairdatastation.api.validator.ValidIri;
 
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,18 +34,23 @@ import java.util.UUID;
 @Builder(toBuilder = true)
 public class TrainDispatchPayloadDTO {
 
+    // TODO: rename "jobUuid"
     @NotNull
-    private UUID jobUuid;
+    private String jobUuid;
 
+    // TODO: minimal requirements for secret?
     @NotNull
     private String secret;
 
     @NotNull
+    @ValidIri
     private String callbackEventLocation;
 
     @NotNull
+    @ValidIri
     private String callbackArtifactLocation;
 
     @NotNull
+    @ValidIri
     private String trainUri;
 }

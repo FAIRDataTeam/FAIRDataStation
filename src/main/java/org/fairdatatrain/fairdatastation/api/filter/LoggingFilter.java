@@ -43,8 +43,7 @@ public class LoggingFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        ServerHttpRequest request = exchange.getRequest();
-        ServerHttpResponse response = exchange.getResponse();
+        final ServerHttpRequest request = exchange.getRequest();
 
         ThreadContext.put("traceId", UUID.randomUUID().toString());
         ThreadContext.put("ipAddress", toStringIfNotNull(request.getRemoteAddress()));
@@ -53,16 +52,18 @@ public class LoggingFilter implements WebFilter {
 
         log.info(format("%s %s", request.getMethod(), request.getURI()));
 
-        Mono<Void> mono = chain.filter(exchange);
+        final ServerHttpResponse response = exchange.getResponse();
 
-        ThreadContext.put("responseStatus", toStringIfNotNull(response.getStatusCode()));
-        ThreadContext.put("contentSize", toStringIfNotNull(response.getHeaders().get(HttpHeaders.CONTENT_LENGTH)));
+        ThreadContext.put("responseStatus",
+                toStringIfNotNull(response.getStatusCode()));
+        ThreadContext.put("contentSize",
+                toStringIfNotNull(response.getHeaders().get(HttpHeaders.CONTENT_LENGTH)));
         log.info(format(
                 "%s %s [Response: %s]",
                 request.getMethod(), request.getURI(), response.getStatusCode())
         );
 
-        return mono;
+        return chain.filter(exchange);
     }
 
     private String toStringIfNotNull(Object object) {

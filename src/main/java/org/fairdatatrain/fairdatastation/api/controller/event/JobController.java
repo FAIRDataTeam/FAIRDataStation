@@ -28,7 +28,6 @@ import org.fairdatatrain.fairdatastation.api.dto.event.job.JobDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.JobSimpleDTO;
 import org.fairdatatrain.fairdatastation.exception.NotFoundException;
 import org.fairdatatrain.fairdatastation.service.event.job.JobService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 

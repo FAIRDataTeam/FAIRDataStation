@@ -23,8 +23,15 @@
 package org.fairdatatrain.fairdatastation.service.event.job.event;
 
 import org.fairdatatrain.fairdatastation.api.dto.event.job.event.JobEventDTO;
+import org.fairdatatrain.fairdatastation.api.dto.event.job.event.JobEventDispatchDTO;
+import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
+import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.model.event.JobEvent;
 import org.springframework.stereotype.Component;
+
+import java.sql.Timestamp;
+
+import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
 
 @Component
 public class JobEventMapper {
@@ -38,6 +45,33 @@ public class JobEventMapper {
                 .occurredAt(jobEvent.getOccurredAt().toInstant())
                 .createdAt(jobEvent.getCreatedAt().toInstant())
                 .updatedAt(jobEvent.getUpdatedAt().toInstant())
+                .build();
+    }
+
+    public JobEvent create(Job job, String message, JobStatus status) {
+        final Timestamp now = now();
+        return JobEvent
+                .builder()
+                .job(job)
+                .message(message)
+                .resultStatus(status)
+                .delivered(false)
+                .tries(0)
+                .nextDispatchAt(now)
+                .occurredAt(now)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    public JobEventDispatchDTO toDispatchDTO(JobEvent event) {
+        return JobEventDispatchDTO
+                .builder()
+                .remoteId(event.getJob().getUuid().toString())
+                .secret(event.getJob().getSecret())
+                .message(event.getMessage())
+                .resultStatus(event.getResultStatus())
+                .occurredAt(event.getOccurredAt().toInstant())
                 .build();
     }
 }
