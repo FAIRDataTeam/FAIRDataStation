@@ -122,7 +122,7 @@ public class RdfUtils {
         model.setNamespace(DCTERMS.NS);
         model.setNamespace(DCAT.NS);
         model.setNamespace(FOAF.NS);
-        model.setNamespace(XMLSchema.NS);
+        model.setNamespace(XSD.NS);
         model.setNamespace(LDP.NS);
 
         try (StringWriter out = new StringWriter()) {

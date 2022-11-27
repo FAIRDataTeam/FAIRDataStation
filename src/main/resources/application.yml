@@ -45,6 +45,7 @@ spring:
           '[/**]':
             allowedOrigins: "*"
             allowedMethods: "*"
+      enabled: true
 
 springdoc:
   swagger-ui:

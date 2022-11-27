@@ -22,10 +22,9 @@
  */
 package org.fairdatatrain.fairdatastation.api.dto.event.train;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.fairdatatrain.fairdatastation.api.validator.ValidIri;
-
-import javax.validation.constraints.NotNull;
 
 @AllArgsConstructor
 @NoArgsConstructor
