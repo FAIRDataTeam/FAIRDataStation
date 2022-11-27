@@ -22,6 +22,8 @@
  */
 package org.fairdatatrain.fairdatastation.data.model.event;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,10 +31,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.fairdatatrain.fairdatastation.data.model.base.BaseEntity;
 import org.fairdatatrain.fairdatastation.data.model.enums.ArtifactStorage;
-import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 
 @Entity(name = "JobArtifact")
@@ -74,8 +73,7 @@ public class JobArtifact extends BaseEntity {
     private Timestamp occurredAt;
 
     @Lob
-    @Column(name = "data")
-    @Type(type = "org.hibernate.type.BinaryType")
+    @Column(name = "data", columnDefinition = "BLOB")
     private byte[] data;
 
     @NotNull

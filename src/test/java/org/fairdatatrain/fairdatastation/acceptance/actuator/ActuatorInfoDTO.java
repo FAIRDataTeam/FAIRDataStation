@@ -23,13 +23,12 @@
 package org.fairdatatrain.fairdatastation.acceptance.actuator;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -37,6 +36,7 @@ import javax.validation.constraints.NotNull;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ActuatorInfoDTO {
+
 	@NotNull
 	@NotBlank
 	private String name;
