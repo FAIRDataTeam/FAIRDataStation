@@ -24,25 +24,27 @@ package org.fairdatatrain.fairdatastation.service.storage;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.common.lang.FileFormat;
 import org.eclipse.rdf4j.query.*;
-import org.eclipse.rdf4j.query.parser.*;
-import org.eclipse.rdf4j.query.resultio.TupleQueryResultWriter;
-import org.eclipse.rdf4j.query.resultio.sparqljson.SPARQLResultsJSONWriter;
+import org.eclipse.rdf4j.query.resultio.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
 import org.fairdatatrain.fairdatastation.exception.StorageException;
 import org.fairdatatrain.fairdatastation.service.interaction.entity.InteractionArtifact;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
 
-import java.io.StringWriter;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
-import static org.fairdatatrain.fairdatastation.utils.RdfUtils.write;
+import static org.fairdatatrain.fairdatastation.utils.StringUtils.sanitizeFilename;
 
 @Slf4j
 @Service
@@ -51,87 +53,134 @@ public class TripleStoreStorage {
 
     private final Repository repository;
 
-    public List<InteractionArtifact> executeQuery(String sparqlQuery) throws StorageException {
-        final ParsedOperation operation =
-                QueryParserUtil.parseOperation(QueryLanguage.SPARQL, sparqlQuery, null);
-        if (operation instanceof ParsedBooleanQuery) {
-            final boolean result = runBooleanQuery(sparqlQuery);
-            final String content = result ? "TRUE" : "FALSE";
-            return List.of(
-                    InteractionArtifact.builder()
-                            .name("Response")
-                            .filename("response.txt")
-                            .contentType("text/plain")
-                            .data(content.getBytes(StandardCharsets.UTF_8))
-                            .build()
-            );
-        }
-        if (operation instanceof ParsedTupleQuery) {
-            // TODO: add CSV? TSV? XML?
-            final StringWriter stringWriter = new StringWriter();
-            final SPARQLResultsJSONWriter writer = new SPARQLResultsJSONWriter(stringWriter);
-            runTupleQuery(sparqlQuery, writer);
-            return List.of(
-                    InteractionArtifact.builder()
-                            .name("Result (JSON)")
-                            .filename("result.json")
-                            .contentType(RDFFormat.TURTLE.getDefaultMIMEType())
-                            .data(writer.toString().getBytes(StandardCharsets.UTF_8))
-                            .build()
-            );
-        }
-        if (operation instanceof ParsedGraphQuery) {
-            final Model result = runGraphQuery(sparqlQuery);
-            final String content = write(result, RDFFormat.TURTLE);
-            return List.of(
-                    InteractionArtifact.builder()
-                            .name("Result graph (RDF)")
-                            .filename("graph.rdf")
-                            .contentType(RDFFormat.TURTLE.getDefaultMIMEType())
-                            .data(content.getBytes(StandardCharsets.UTF_8))
-                            .build()
-            );
-        }
-        throw new StorageException(format("Unsupported query type: %s",
-                operation.getClass().getName()));
-    }
-
-    // ASK
-    private Boolean runBooleanQuery(String sparqlQuery) throws StorageException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            final BooleanQuery query =
-                    conn.prepareBooleanQuery(QueryLanguage.SPARQL, sparqlQuery, null);
-            return query.evaluate();
-        }
-        catch (RepositoryException exception) {
-            throw new StorageException(exception.getMessage());
-        }
-    }
-
-    // SELECT
-    private void runTupleQuery(
-            String sparqlQuery, TupleQueryResultWriter writer
+    public List<InteractionArtifact> executeQuery(
+            String sparqlQuery, String name, String accept
     ) throws StorageException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            final TupleQuery query =
-                    conn.prepareTupleQuery(QueryLanguage.SPARQL, sparqlQuery, null);
-            query.evaluate(writer);
+        return executeQuery(sparqlQuery, name, Set.of(accept));
+    }
+
+    public List<InteractionArtifact> executeQuery(
+            String sparqlQuery, String name, Set<String> accept
+    ) throws StorageException {
+        if (accept.isEmpty()) {
+            return List.of();
+        }
+        try (RepositoryConnection connection = repository.getConnection()) {
+            final Query query = connection.prepareQuery(QueryLanguage.SPARQL, sparqlQuery);
+
+            // SELECT
+            if (query instanceof final TupleQuery selectQuery) {
+                return evaluateQuery(selectQuery, name, accept);
+            }
+            // ASK
+            else if (query instanceof final BooleanQuery askQuery) {
+                return evaluateQuery(askQuery, name, accept);
+            }
+            // DESCRIBE / CONSTRUCT
+            else if (query instanceof final GraphQuery graphQuery) {
+                return evaluateQuery(graphQuery, name, accept);
+            }
+            // Other (e.g. UPDATE)
+            else {
+                throw new StorageException(format("Unsupported query type: %s",
+                        query.getClass().getName()));
+            }
         }
         catch (RepositoryException exception) {
             throw new StorageException(exception.getMessage());
         }
     }
 
-    // CONSTRUCT/DESCRIBE
-    private Model runGraphQuery(String sparqlQuery) throws StorageException {
-        // TODO: support different RDF formats?
-        try (RepositoryConnection conn = repository.getConnection()) {
-            final GraphQuery query =
-                    conn.prepareGraphQuery(QueryLanguage.SPARQL, sparqlQuery, null);
-            return QueryResults.asModel(query.evaluate());
+    private List<InteractionArtifact> evaluateQuery(
+            TupleQuery query, String name, Set<String> accept
+    ) {
+        final Set<TupleQueryResultFormat> formats = accept
+                .parallelStream()
+                .map(QueryResultIO::getWriterFormatForMIMEType)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(format -> format instanceof TupleQueryResultFormat)
+                .map(format -> (TupleQueryResultFormat) format)
+                .collect(Collectors.toSet());
+        if (accept.contains(MimeTypeUtils.ALL_VALUE)) {
+            formats.add(TupleQueryResultFormat.JSON);
         }
-        catch (RepositoryException exception) {
-            throw new StorageException(exception.getMessage());
-        }
+        return formats
+                .parallelStream()
+                .map(format -> getQueryResult(query, name, format))
+                .toList();
     }
+
+    private List<InteractionArtifact> evaluateQuery(
+            BooleanQuery query, String name, Set<String> accept
+    ) {
+        final Set<BooleanQueryResultFormat> formats = accept
+                .parallelStream()
+                .map(QueryResultIO::getBooleanParserFormatForMIMEType)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(format -> format instanceof BooleanQueryResultFormat)
+                .map(format -> (BooleanQueryResultFormat) format)
+                .collect(Collectors.toSet());
+        if (accept.contains(MimeTypeUtils.ALL_VALUE)) {
+            formats.add(BooleanQueryResultFormat.TEXT);
+        }
+        return formats
+                .parallelStream()
+                .map(format -> getQueryResult(query, name, format))
+                .toList();
+    }
+
+    private List<InteractionArtifact> evaluateQuery(
+            GraphQuery query, String name, Set<String> accept
+    ) {
+        final Set<RDFFormat> formats = accept
+                .parallelStream()
+                .map(Rio::getParserFormatForMIMEType)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
+        if (accept.contains(MimeTypeUtils.ALL_VALUE)) {
+            formats.add(RDFFormat.TURTLE);
+        }
+        return formats
+                .parallelStream()
+                .map(format -> getQueryResult(query, name, format))
+                .toList();
+    }
+
+    private InteractionArtifact getQueryResult(
+            TupleQuery query, String name, TupleQueryResultFormat format
+    ) {
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final TupleQueryResultWriter writer = QueryResultIO.createTupleWriter(format, bao);
+        query.evaluate(writer);
+        return createArtifact(name, format, bao.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InteractionArtifact getQueryResult(
+            BooleanQuery query, String name, BooleanQueryResultFormat format
+    ) {
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final BooleanQueryResultWriter writer = QueryResultIO.createBooleanWriter(format, bao);
+        writer.handleBoolean(query.evaluate());
+        return createArtifact(name, format, bao.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InteractionArtifact getQueryResult(GraphQuery query, String name, RDFFormat format) {
+        final ByteArrayOutputStream bao = new ByteArrayOutputStream();
+        final RDFHandler writer = Rio.createWriter(format, bao);
+        query.evaluate(writer);
+        return createArtifact(name, format, bao.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private InteractionArtifact createArtifact(String name, FileFormat format, byte[] data) {
+        return InteractionArtifact.builder()
+                .name(format("%s (%s)", name, format.getName()))
+                .filename(format("%s.%s", sanitizeFilename(name), format.getDefaultFileExtension()))
+                .contentType(format.getDefaultMIMEType())
+                .data(data)
+                .build();
+    }
+
 }

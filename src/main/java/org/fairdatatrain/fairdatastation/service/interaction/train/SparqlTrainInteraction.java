@@ -158,7 +158,8 @@ public class SparqlTrainInteraction implements ITrainInteraction {
 
     private List<InteractionArtifact> executeQuery(String sparqlQuery) {
         try {
-            return tripleStoreStorage.executeQuery(sparqlQuery);
+            // TODO: set accept + name based on possibilities/train metadata?
+            return tripleStoreStorage.executeQuery(sparqlQuery, "Result", "*/*");
         }
         catch (Exception exception) {
             throw new RuntimeException(format("Execution: Failed to execute SPARQL query (%s)",
