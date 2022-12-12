@@ -38,7 +38,7 @@
 		<lombok.version>1.18.24</lombok.version>
 		<springdoc.version>1.6.13</springdoc.version>
 		<postgresql.version>42.5.1</postgresql.version>
-		<rdf4j.version>4.2.1</rdf4j.version>
+		<rdf4j.version>4.2.2</rdf4j.version>
 
 		<!-- plugins -->
 		<plugin.license.version>4.1</plugin.license.version>
