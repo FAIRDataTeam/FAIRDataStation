@@ -22,10 +22,24 @@
  */
 package org.fairdatatrain.fairdatastation.data.repository.event;
 
-import org.fairdatatrain.fairdatastation.data.model.event.JobArtifact;
+import org.fairdatatrain.fairdatastation.data.model.event.EventDelivery;
 import org.fairdatatrain.fairdatastation.data.repository.base.BaseRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 @Repository
-public interface JobArtifactRepository extends BaseRepository<JobArtifact> {
+public interface EventDeliveryRepository extends BaseRepository<EventDelivery> {
+
+    @Query(value = """
+        SELECT * FROM event_delivery
+        WHERE dispatch_at < :ts AND delivered = false AND dispatched_at IS NULL
+        ORDER BY dispatch_at ASC, priority DESC
+        """,
+            nativeQuery = true
+    )
+    List<EventDelivery> getNextEventDeliveries(@Param("ts") Timestamp timestamp);
 }

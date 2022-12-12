@@ -30,58 +30,45 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.fairdatatrain.fairdatastation.data.model.base.BaseEntity;
-import org.fairdatatrain.fairdatastation.data.model.enums.ArtifactStorage;
 
 import java.sql.Timestamp;
-import java.util.List;
 
-@Entity(name = "JobArtifact")
-@Table(name = "job_artifact")
+@Entity(name = "EventDelivery")
+@Table(name = "event_delivery")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder(toBuilder = true)
-public class JobArtifact extends BaseEntity {
+public class EventDelivery extends BaseEntity {
 
     @NotNull
-    @Column(name = "display_name")
-    private String displayName;
+    @Column(name = "delivered", nullable = false)
+    private Boolean delivered;
 
     @NotNull
-    @Column(name = "filename", nullable = false)
-    private String filename;
+    @Column(name = "message", nullable = false)
+    private String message;
+
+    @Column(name = "dispatch_at", nullable = false)
+    private Timestamp dispatchAt;
+
+    @Column(name = "dispatched_at")
+    private Timestamp dispatchedAt;
 
     @NotNull
-    @Column(name = "bytesize", nullable = false)
-    private Long bytesize;
+    @Column(name = "retry_number", nullable = false)
+    private Integer retryNumber;
 
     @NotNull
-    @Column(name = "hash", nullable = false)
-    private String hash;
+    @Column(name = "priority", nullable = false)
+    private Integer priority;
 
-    @NotNull
-    @Column(name = "content_type", nullable = false)
-    private String contentType;
-
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "storage", columnDefinition = "artifact_storage", nullable = false)
-    private ArtifactStorage storage;
-
-    @NotNull
-    @Column(name = "occurred_at", nullable = false)
-    private Timestamp occurredAt;
-
-    @Lob
-    @Column(name = "data", columnDefinition = "BLOB")
-    private byte[] data;
-
-    @NotNull
     @ManyToOne
-    @JoinColumn(name = "job_id", nullable = false)
-    private Job job;
+    @JoinColumn(name = "job_artifact_id")
+    private JobArtifact jobArtifact;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "jobArtifact")
-    private List<EventDelivery> deliveries;
+    @ManyToOne
+    @JoinColumn(name = "job_event_id")
+    private JobEvent jobEvent;
 }
