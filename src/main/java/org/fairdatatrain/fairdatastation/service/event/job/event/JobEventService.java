@@ -30,32 +30,27 @@ import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.model.event.JobEvent;
 import org.fairdatatrain.fairdatastation.data.repository.event.JobEventRepository;
 import org.fairdatatrain.fairdatastation.exception.NotFoundException;
+import org.fairdatatrain.fairdatastation.service.event.delivery.EventDeliveryService;
 import org.fairdatatrain.fairdatastation.service.event.job.JobService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class JobEventService {
-
-    private static final int MAX_TRIES_DISPATCH = 5;
 
     private final JobEventRepository jobEventRepository;
 
     private final JobEventMapper jobEventMapper;
 
     private final JobService jobService;
+
+    private final EventDeliveryService eventDeliveryService;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<JobEventDTO> getEventsForJob(UUID jobUuid) throws NotFoundException {
@@ -76,42 +71,8 @@ public class JobEventService {
         final JobEvent jobEvent = jobEventRepository.saveAndFlush(
                 jobEventMapper.create(job, message, status)
         );
+        eventDeliveryService.createInitialDelivery(jobEvent);
         log.info("Created event {} for job {}", jobEvent.getUuid(), job.getUuid());
-    }
-
-    public Optional<JobEvent> getNextToDispatch() {
-        // TODO: priority?
-        // CHECKSTYLE.OFF: LineLength
-        return jobEventRepository.findFirstByDeliveredIsFalseAndNextDispatchAtIsNotNullAndNextDispatchAtIsBeforeOrderByNextDispatchAtAsc(now());
-        // CHECKSTYLE.ON: LineLength
-    }
-
-    public void updateDispatch(JobEvent jobEvent, Boolean delivered) {
-        updateDispatch(jobEvent, delivered, null);
-    }
-
-    @Transactional
-    public void updateDispatch(JobEvent jobEvent, Boolean delivered, String error) {
-        jobEvent.setDelivered(delivered);
-        if (delivered) {
-            jobEvent.setNextDispatchAt(null);
-            jobEvent.setLastError(null);
-        }
-        else {
-            final int tries = jobEvent.getTries() + 1;
-            jobEvent.setTries(tries);
-            jobEvent.setLastError(error);
-            if (tries >= MAX_TRIES_DISPATCH) {
-                jobEvent.setNextDispatchAt(null);
-            }
-            else {
-                final long minutesNext = (long) Math.pow(2, tries);
-                final Instant nextAt = Instant.now().plus(Duration.ofMinutes(minutesNext));
-                jobEvent.setNextDispatchAt(Timestamp.from(nextAt));
-            }
-        }
-        jobEvent.setUpdatedAt(now());
-        jobEventRepository.saveAndFlush(jobEvent);
     }
 
     public JobEventMapper getMapper() {

@@ -22,20 +22,10 @@
  */
 package org.fairdatatrain.fairdatastation.data.repository.event;
 
-import jakarta.persistence.LockModeType;
 import org.fairdatatrain.fairdatastation.data.model.event.JobEvent;
 import org.fairdatatrain.fairdatastation.data.repository.base.BaseRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
-
-import java.sql.Timestamp;
-import java.util.Optional;
 
 @Repository
 public interface JobEventRepository extends BaseRepository<JobEvent> {
-
-    // CHECKSTYLE.OFF: LineLength
-    @Lock(LockModeType.PESSIMISTIC_READ)
-    Optional<JobEvent> findFirstByDeliveredIsFalseAndNextDispatchAtIsNotNullAndNextDispatchAtIsBeforeOrderByNextDispatchAtAsc(Timestamp threshold);
-    // CHECKSTYLE.ON: LineLength
 }

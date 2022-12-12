@@ -33,6 +33,7 @@ import org.fairdatatrain.fairdatastation.data.model.base.BaseEntity;
 import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Entity(name = "JobEvent")
 @Table(name = "job_event")
@@ -60,18 +61,6 @@ public class JobEvent extends BaseEntity {
     @JoinColumn(name = "job_id", nullable = false)
     private Job job;
 
-    // TODO: delivery details (extract?)
-    @NotNull
-    @Column(name = "delivered", nullable = false)
-    private Boolean delivered;
-
-    @Column(name = "last_error")
-    private String lastError;
-
-    @Column(name = "next_dispatch_at")
-    private Timestamp nextDispatchAt;
-
-    @NotNull
-    @Column(name = "tries")
-    private Integer tries;
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "jobEvent")
+    private List<EventDelivery> deliveries;
 }

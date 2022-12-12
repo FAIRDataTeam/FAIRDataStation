@@ -30,6 +30,7 @@ import org.fairdatatrain.fairdatastation.data.model.event.Job;
 import org.fairdatatrain.fairdatastation.data.model.event.JobArtifact;
 import org.fairdatatrain.fairdatastation.data.repository.event.JobArtifactRepository;
 import org.fairdatatrain.fairdatastation.exception.NotFoundException;
+import org.fairdatatrain.fairdatastation.service.event.delivery.EventDeliveryService;
 import org.fairdatatrain.fairdatastation.service.event.job.JobService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -37,24 +38,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import static java.lang.String.format;
 import static org.fairdatatrain.fairdatastation.utils.HashUtils.bytesToHex;
-import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class JobArtifactService {
-
-    private static final int MAX_TRIES_DISPATCH = 5;
 
     private static final String ENTITY_NAME = "JobArtifact";
 
@@ -63,6 +57,8 @@ public class JobArtifactService {
     private final JobArtifactMapper jobArtifactMapper;
 
     private final JobService jobService;
+
+    private final EventDeliveryService eventDeliveryService;
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true)
     public List<JobArtifactDTO> getArtifactsForJob(UUID jobUuid) throws NotFoundException {
@@ -101,6 +97,7 @@ public class JobArtifactService {
         final JobArtifact jobArtifact = jobArtifactRepository.saveAndFlush(
                 jobArtifactMapper.create(job, displayName, filename, contentType, data, hash)
         );
+        eventDeliveryService.createInitialDelivery(jobArtifact);
         log.info("Created artifact {} for job {}", jobArtifact.getUuid(), job.getUuid());
     }
 
@@ -113,42 +110,6 @@ public class JobArtifactService {
             throw new RuntimeException("SHA-256 hashing is not supported");
         }
         return bytesToHex(digest.digest(data));
-    }
-
-    public Optional<JobArtifact> getNextToDispatch() {
-        // TODO: priority?
-        // TODO: shorter methodname
-        // CHECKSTYLE.OFF: LineLength
-        return jobArtifactRepository.findFirstByDeliveredIsFalseAndNextDispatchAtIsNotNullAndNextDispatchAtIsBeforeOrderByNextDispatchAtAsc(now());
-        // CHECKSTYLE.ON: LineLength
-    }
-
-    public void updateDispatch(JobArtifact jobArtifact, Boolean delivered) {
-        updateDispatch(jobArtifact, delivered, null);
-    }
-
-    @Transactional
-    public void updateDispatch(JobArtifact jobArtifact, Boolean delivered, String error) {
-        jobArtifact.setDelivered(delivered);
-        if (delivered) {
-            jobArtifact.setNextDispatchAt(null);
-            jobArtifact.setLastError(null);
-        }
-        else {
-            final int tries = jobArtifact.getTries() + 1;
-            jobArtifact.setTries(tries);
-            jobArtifact.setLastError(error);
-            if (tries >= MAX_TRIES_DISPATCH) {
-                jobArtifact.setNextDispatchAt(null);
-            }
-            else {
-                final long minutesNext = (long) Math.pow(2, tries);
-                final Instant nextAt = Instant.now().plus(Duration.ofMinutes(minutesNext));
-                jobArtifact.setNextDispatchAt(Timestamp.from(nextAt));
-            }
-        }
-        jobArtifact.setUpdatedAt(now());
-        jobArtifactRepository.saveAndFlush(jobArtifact);
     }
 
     public JobArtifactMapper getMapper() {

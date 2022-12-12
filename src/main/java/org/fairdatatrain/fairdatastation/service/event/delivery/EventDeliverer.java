@@ -20,32 +20,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation.service.event;
+package org.fairdatatrain.fairdatastation.service.event.delivery;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.artifact.JobArtifactDispatchDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.job.event.JobEventDispatchDTO;
+import org.fairdatatrain.fairdatastation.data.model.event.EventDelivery;
 import org.fairdatatrain.fairdatastation.data.model.event.JobArtifact;
 import org.fairdatatrain.fairdatastation.data.model.event.JobEvent;
 import org.fairdatatrain.fairdatastation.service.event.job.artifact.JobArtifactService;
 import org.fairdatatrain.fairdatastation.service.event.job.event.JobEventService;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 
-import java.util.Optional;
+import java.sql.Timestamp;
+import java.util.List;
 
 import static java.lang.String.format;
+import static org.fairdatatrain.fairdatastation.utils.TimeUtils.now;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class EventDispatcher {
+public class EventDeliverer {
+
+    private final EventDeliveryService eventDeliveryService;
 
     private final JobArtifactService jobArtifactService;
 
@@ -53,61 +57,40 @@ public class EventDispatcher {
 
     private final WebClient webClient;
 
-    // TODO: config
-    // TODO: multi-thread? configurable?
-    @Async
-    @Scheduled(
-            initialDelayString = "${dispatcher.dispatch.initDelay:PT10S}",
-            fixedRateString = "${dispatcher.dispatch.interval:PT10S}"
-    )
-    @Transactional
-    public void processJobs() {
-        final Optional<JobArtifact> artifact = jobArtifactService.getNextToDispatch();
-        if (artifact.isPresent()) {
-            tryArtifact(artifact.get());
-        }
-        else {
-            final Optional<JobEvent> event = jobEventService.getNextToDispatch();
-            if (event.isPresent()) {
-                tryEvent(event.get());
-            }
-        }
-    }
-
-    private void tryArtifact(JobArtifact artifact) {
-        log.info("Dispatching artifact {}", artifact.getUuid());
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void deliver(JobArtifact jobArtifact, EventDelivery eventDelivery) {
+        log.debug("Delivering job artifact {}", jobArtifact.getUuid());
         final JobArtifactDispatchDTO dto = jobArtifactService
                 .getMapper()
-                .toDispatchDTO(artifact);
+                .toDispatchDTO(jobArtifact);
+        deliver(eventDelivery, jobArtifact.getJob().getCallbackArtifact(), dto);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void deliver(JobEvent jobEvent, EventDelivery eventDelivery) {
+        log.debug("Delivering job event {}", jobEvent.getUuid());
+        final JobEventDispatchDTO dto = jobEventService
+                .getMapper()
+                .toDispatchDTO(jobEvent);
+        deliver(eventDelivery, jobEvent.getJob().getCallbackEvent(), dto);
+    }
+
+    protected void deliver(EventDelivery eventDelivery, String uri, Object payload) {
+        final Timestamp dispatchedAt = now();
         try {
-            dispatch(artifact.getJob().getCallbackArtifact(), dto);
-            jobArtifactService.updateDispatch(artifact, true);
+            dispatch(uri, payload);
+            eventDeliveryService.updateSuccess(eventDelivery, dispatchedAt);
         }
         catch (Exception exception) {
             log.debug("Exception while dispatching artifact", exception);
             log.warn("Failed to dispatch artifact: {}", exception.getMessage());
-            jobArtifactService.updateDispatch(artifact, false);
-        }
-    }
-
-    private void tryEvent(JobEvent event) {
-        log.info("Dispatching event {}", event.getUuid());
-        final JobEventDispatchDTO dto = jobEventService
-                .getMapper()
-                .toDispatchDTO(event);
-        try {
-            dispatch(event.getJob().getCallbackEvent(), dto);
-            jobEventService.updateDispatch(event, true);
-        }
-        catch (Exception exception) {
-            log.debug("Exception while dispatching event", exception);
-            log.warn("Failed to dispatch event: {}", exception.getMessage());
-            jobEventService.updateDispatch(event, false);
+            eventDeliveryService.updateFailed(eventDelivery, dispatchedAt);
+            eventDeliveryService.createNextDelivery(eventDelivery);
         }
     }
 
     private void dispatch(String uri, Object payload) {
-        // TODO: logging
+        log.debug("Dispatching payload to {}", uri);
         try {
             webClient
                     .post()
@@ -126,5 +109,9 @@ public class EventDispatcher {
                     "Station responded with status: " + exception.getMessage()
             );
         }
+    }
+
+    public List<EventDelivery> getNextEventDeliveries() {
+        return eventDeliveryService.getNextEventDeliveries();
     }
 }

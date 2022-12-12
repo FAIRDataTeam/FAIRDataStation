@@ -24,31 +24,40 @@ package org.fairdatatrain.fairdatastation.service.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
-import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchResponseDTO;
-import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
-import org.fairdatatrain.fairdatastation.data.model.event.Job;
-import org.fairdatatrain.fairdatastation.service.event.job.JobService;
+import org.fairdatatrain.fairdatastation.data.model.event.EventDelivery;
+import org.fairdatatrain.fairdatastation.service.event.delivery.EventDeliverer;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TrainEventService {
+public class EventAsyncDeliverer {
 
-    private final JobService jobService;
+    private final EventDeliverer eventDeliverer;
 
-    @Transactional(propagation = Propagation.REQUIRED)
-    public TrainDispatchResponseDTO acceptTrain(TrainDispatchPayloadDTO reqDto) {
-        // TODO: validate before creating a job
-        final Job job = jobService.createJobForTrain(reqDto);
-        return TrainDispatchResponseDTO
-                .builder()
-                .id(job.getUuid().toString())
-                .message("Train queued for processing...")
-                .status(JobStatus.QUEUED)
-                .build();
+    @Transactional
+    @Scheduled(
+            initialDelayString = "${dispatcher.dispatch.initDelay:PT10S}",
+            fixedRateString = "${dispatcher.dispatch.interval:PT30S}"
+    )
+    public void processJobs() {
+        final List<EventDelivery> eventDeliveryList =
+                eventDeliverer.getNextEventDeliveries();
+        log.info("Delivering {} items in this iteration", eventDeliveryList.size());
+        eventDeliveryList.forEach(this::deliver);
+    }
+
+    protected void deliver(EventDelivery eventDelivery) {
+        log.info("Delivering event delivery {}", eventDelivery.getUuid());
+        if (eventDelivery.getJobEvent() != null) {
+            eventDeliverer.deliver(eventDelivery.getJobEvent(), eventDelivery);
+        }
+        else if (eventDelivery.getJobArtifact() != null) {
+            eventDeliverer.deliver(eventDelivery.getJobArtifact(), eventDelivery);
+        }
     }
 }
