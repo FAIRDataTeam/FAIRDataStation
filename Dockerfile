@@ -21,7 +21,7 @@
 # THE SOFTWARE.
 #
 
-FROM maven:3-eclipse-temurin-17-alpine as builder
+FROM maven:3-eclipse-temurin-17 as builder
 
 WORKDIR /builder
 
@@ -31,7 +31,7 @@ RUN mvn --quiet -B -U --fail-fast -DskipTests package
 
 ################################################################################
 # RUN STAGE
-FROM eclipse-temurin:17-alpine
+FROM eclipse-temurin:17
 
 WORKDIR /app
 EXPOSE 8080
