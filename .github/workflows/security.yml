@@ -64,7 +64,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=critical
 
   snyk-docker:
     name: Snyk (Docker)
@@ -90,4 +90,4 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           image: fdp:snyk-test
-          args: --severity-threshold=high
+          args: --severity-threshold=critical

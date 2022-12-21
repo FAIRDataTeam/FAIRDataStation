@@ -48,7 +48,7 @@
 		<plugin.rdf4j_generator.version>0.2.0</plugin.rdf4j_generator.version>
 
 		<!-- override for security -->
-		<snakeyaml.version>1.31</snakeyaml.version>
+		<snakeyaml.version>1.33</snakeyaml.version>
 	</properties>
 
 	<dependencies>
