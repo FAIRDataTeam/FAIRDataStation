@@ -20,10 +20,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation.service.interaction.entity;
+package org.fairdatatrain.fairdatastation.service.interaction.train.fhir.request;
 
-// Supported train types by FDS
-public enum TrainType {
-    FHIR_TRAIN,
-    SPARQL_TRAIN,
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class FHIRRequestParameter {
+
+    @NotNull
+    @NotBlank
+    private String name;
+
+    private String value;
+
+    @NotNull
+    private Boolean isMandatory;
 }

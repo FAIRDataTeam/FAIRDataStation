@@ -20,10 +20,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation.service.interaction.entity;
+package org.fairdatatrain.fairdatastation.config.properties;
 
-// Supported train types by FDS
-public enum TrainType {
-    FHIR_TRAIN,
-    SPARQL_TRAIN,
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "data-station.apis.fhir")
+public class FHIRProperties {
+
+    private String base;
+
 }

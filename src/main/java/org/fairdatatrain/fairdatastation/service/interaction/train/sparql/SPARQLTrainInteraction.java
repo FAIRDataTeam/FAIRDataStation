@@ -20,14 +20,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation.service.interaction.train;
+package org.fairdatatrain.fairdatastation.service.interaction.train.sparql;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.dtls.fairdatapoint.vocabulary.FDT;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.parser.ParsedOperation;
 import org.eclipse.rdf4j.query.parser.ParsedUpdate;
@@ -40,30 +38,33 @@ import org.fairdatatrain.fairdatastation.service.event.job.artifact.JobArtifactS
 import org.fairdatatrain.fairdatastation.service.event.job.event.JobEventService;
 import org.fairdatatrain.fairdatastation.service.interaction.entity.InteractionArtifact;
 import org.fairdatatrain.fairdatastation.service.interaction.fetch.TrainFetcher;
+import org.fairdatatrain.fairdatastation.service.interaction.train.AbstractTrainInteraction;
+import org.fairdatatrain.fairdatastation.service.interaction.train.ITrainInteraction;
 import org.fairdatatrain.fairdatastation.service.storage.TripleStoreStorage;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 import static java.lang.String.format;
-import static org.fairdatatrain.fairdatastation.utils.RdfUtils.*;
+import static org.fairdatatrain.fairdatastation.utils.RdfUtils.getStringObjectBy;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class SparqlTrainInteraction implements ITrainInteraction {
-
-    private final TrainFetcher trainFetcher;
-
-    private final BasicAccessControlService accessControlService;
+public class SPARQLTrainInteraction extends AbstractTrainInteraction implements ITrainInteraction {
 
     private final TripleStoreStorage tripleStoreStorage;
 
-    private final JobEventService jobEventService;
-
-    private final JobArtifactService jobArtifactService;
-
-    private final JobService jobService;
+    public SPARQLTrainInteraction(
+            BasicAccessControlService accessControlService,
+            JobEventService jobEventService,
+            JobArtifactService jobArtifactService,
+            JobService jobService,
+            TrainFetcher trainFetcher,
+            TripleStoreStorage tripleStoreStorage
+    ) {
+        super(accessControlService, jobEventService, jobArtifactService, jobService, trainFetcher);
+        this.tripleStoreStorage = tripleStoreStorage;
+    }
 
     @Override
     public void interact(Job job, Model model, Resource train) {
@@ -80,13 +81,11 @@ public class SparqlTrainInteraction implements ITrainInteraction {
 
             sendInfo(job, "Validation: Validating payload metadata");
             validatePayloadMetadata(job, payloadMetadata, payloadResource);
+            final String payloadDownloadUrl = getPayloadUrl(payloadMetadata, payloadResource);
             sendInfo(job, "Validation: Payload metadata validated");
 
-            final String payloadDownloadUrl = getPayloadUrl(payloadMetadata, payloadResource);
-            // TODO: check payload download URL
-
             sendInfo(job, "Fetch: Fetching train payload (SPARQL query)");
-            final String sparqlQuery = fetchSparqlQuery(payloadDownloadUrl);
+            final String sparqlQuery = fetchPayload(payloadDownloadUrl);
             sendInfo(job, "Fetch: Train payload (SPARQL query) fetched");
 
             sendInfo(job, "Validation: Validating train payload");
@@ -104,55 +103,11 @@ public class SparqlTrainInteraction implements ITrainInteraction {
             sendInfo(job, "Execution: Preparing and sending artifact(s)");
             results.forEach(result -> sendArtifact(job, result));
 
-            jobEventService.createEvent(job, "Finished!", JobStatus.FINISHED);
-            jobService.updateStatus(job, JobStatus.FINISHED);
+            getJobEventService().createEvent(job, "Finished!", JobStatus.FINISHED);
+            getJobService().updateStatus(job, JobStatus.FINISHED);
         }
         catch (Exception exception) {
             handleInteractionFailed(job, exception.getMessage());
-        }
-    }
-
-    private void validatePayloadResource(Resource payloadResource) {
-        if (payloadResource == null) {
-            throw new RuntimeException("Validation: No payload resource found");
-        }
-    }
-
-    private void handleInteractionFailed(Job job, String message) {
-        jobEventService.createEvent(job, message, JobStatus.FAILED);
-        jobService.updateStatus(job, JobStatus.FAILED);
-    }
-
-    private void sendInfo(Job job, String message) {
-        jobEventService.createEvent(job, message);
-    }
-
-    private void sendArtifact(Job job, InteractionArtifact result) {
-        jobArtifactService.createArtifact(
-                job,
-                result.getName(),
-                result.getFilename(),
-                result.getContentType(),
-                result.getData()
-        );
-    }
-
-    private String fetchSparqlQuery(String payloadDownloadUrl) {
-        try {
-            return trainFetcher.fetchSimplePayload(payloadDownloadUrl);
-        }
-        catch (Exception exception) {
-            throw new RuntimeException("Validation: Failed to fetch train payload (SPARQL query)");
-        }
-    }
-
-    private void checkAccess() {
-        try {
-            accessControlService.checkAccess();
-        }
-        catch (Exception exception) {
-            throw new RuntimeException(format("Access Control: Access denied (%s)",
-                    exception.getMessage()));
         }
     }
 
@@ -167,33 +122,10 @@ public class SparqlTrainInteraction implements ITrainInteraction {
         }
     }
 
-    private Model getPayloadMetadata(Job job, Resource payloadResource) {
-        return trainFetcher.fetchPayloadMetadata(payloadResource.stringValue());
-    }
-
     private void validatePayloadMetadata(Job job, Model model, Resource payloadResource) {
-        // TODO: payload metadata validation
-    }
-
-    private Resource getPayloadMetadataUrl(Model model, Resource trainResource) {
-        Value value = getObjectBy(model, trainResource, FDT.HASPAYLOAD);
-        if (value != null && value.isResource()) {
-            return (Resource) value;
+        if (getStringObjectBy(model, payloadResource, FDT.PAYLOADDOWNLOADURL) == null) {
+            throw new RuntimeException("Validation: Missing payload download URL");
         }
-        value = getObjectBy(model, trainResource, i("https://w3id.org/fdp/fdt-o#hasPayload"));
-        if (value != null && value.isResource()) {
-            return (Resource) value;
-        }
-        return null;
-    }
-
-    private String getPayloadUrl(Model model, Resource payloadResource) {
-        final String value = getStringObjectBy(model, payloadResource, FDT.PAYLOADDOWNLOADURL);
-        if (value != null) {
-            return value;
-        }
-        return getStringObjectBy(model, payloadResource,
-                i("https://w3id.org/fdp/fdt-o#payloadDownloadURL"));
     }
 
     private void validateSparqlQuery(String sparqlQuery) {
