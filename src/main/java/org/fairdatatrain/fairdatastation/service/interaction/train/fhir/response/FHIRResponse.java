@@ -20,10 +20,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fairdatatrain.fairdatastation.service.interaction.entity;
+package org.fairdatatrain.fairdatastation.service.interaction.train.fhir.response;
 
-// Supported train types by FDS
-public enum TrainType {
-    FHIR_TRAIN,
-    SPARQL_TRAIN,
+import lombok.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Builder
+public class FHIRResponse {
+
+    private HttpStatusCode statusCode;
+
+    private HttpHeaders headers;
+
+    private String body;
 }

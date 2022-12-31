@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -93,6 +94,7 @@ public class JobArtifactService {
     @Transactional
     public void createArtifact(Job job, String displayName, String filename,
                                String contentType, byte[] data) {
+        System.out.println(Arrays.toString(data));
         final String hash = computeHash(data);
         final JobArtifact jobArtifact = jobArtifactRepository.saveAndFlush(
                 jobArtifactMapper.create(job, displayName, filename, contentType, data, hash)

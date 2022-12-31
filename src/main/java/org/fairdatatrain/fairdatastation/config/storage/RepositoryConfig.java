@@ -35,7 +35,6 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.fairdatatrain.fairdatastation.config.properties.RepositoryProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,9 +64,7 @@ public class RepositoryConfig {
         };
 
         if (repository == null) {
-            log.error("Failed to configure a RDF repository");
-            SpringApplication.exit(context);
-            System.exit(1);
+            log.info("RDF repository is not configured");
         }
         else {
             log.info("Successfully configure a RDF repository");

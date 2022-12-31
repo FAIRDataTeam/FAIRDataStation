@@ -16,6 +16,10 @@ data-station:
       blazegraph:
         url: http://localhost:8888/blazegraph
         repository:
+  apis:
+    fhir:
+      base: https://fhir.res.hinq.nl/fhir/c4y-pgo-1/
+
 
 spring:
   application:

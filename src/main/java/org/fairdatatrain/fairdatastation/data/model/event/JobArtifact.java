@@ -73,8 +73,7 @@ public class JobArtifact extends BaseEntity {
     @Column(name = "occurred_at", nullable = false)
     private Timestamp occurredAt;
 
-    @Lob
-    @Column(name = "data", columnDefinition = "BLOB")
+    @Column(name = "data", columnDefinition = "BLOB NOT NULL", nullable = false)
     private byte[] data;
 
     @NotNull

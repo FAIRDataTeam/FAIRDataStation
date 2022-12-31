@@ -66,8 +66,11 @@ public class GenericTrainInteraction {
             sendInfo(job, "Validation: Validating train metadata and checking type");
             final Resource train = extractValidTrain(trainMetadata);
             sendInfo(job, "Validation: Train metadata validated");
-            final TrainType trainType = determineTrainType(trainMetadata);
-
+            final TrainType trainType =
+                    trainValidationService.determineTrainType(trainMetadata, train);
+            if (trainType == null) {
+                throw new RuntimeException("Validation: Cannot determine train type");
+            }
             final ITrainInteraction trainInteraction =
                     trainInteractionFactory.getTrainInteractionService(trainType);
             trainInteraction.interact(job, trainMetadata, train);
@@ -107,10 +110,5 @@ public class GenericTrainInteraction {
             throw new RuntimeException(format("Validation: Invalid train (%s)",
                     exception.getMessage()));
         }
-    }
-
-    private TrainType determineTrainType(Model trainMetadata) {
-        // TODO: throw if type not defined or multiple types (?)
-        return TrainType.SPARQL_TRAIN;
     }
 }

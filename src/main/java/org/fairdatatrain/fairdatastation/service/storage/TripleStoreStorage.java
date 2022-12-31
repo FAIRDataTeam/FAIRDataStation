@@ -53,6 +53,10 @@ public class TripleStoreStorage {
 
     private final Repository repository;
 
+    public boolean isReady() {
+        return repository != null;
+    }
+
     public List<InteractionArtifact> executeQuery(
             String sparqlQuery, String name, String accept
     ) throws StorageException {

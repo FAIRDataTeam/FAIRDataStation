@@ -25,6 +25,8 @@ package org.fairdatatrain.fairdatastation.service.interaction.train;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.fairdatatrain.fairdatastation.service.interaction.entity.TrainType;
+import org.fairdatatrain.fairdatastation.service.interaction.train.fhir.FHIRTrainInteraction;
+import org.fairdatatrain.fairdatastation.service.interaction.train.sparql.SPARQLTrainInteraction;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -32,10 +34,19 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TrainInteractionFactory {
 
-    private final SparqlTrainInteraction sparqlTrainInteraction;
+    private final FHIRTrainInteraction fhirTrainInteraction;
+
+    private final SPARQLTrainInteraction sparqlTrainInteraction;
 
     public ITrainInteraction getTrainInteractionService(TrainType trainType) {
-        // Currently just SPARQL train supported
-        return sparqlTrainInteraction;
+        switch (trainType) {
+            case SPARQL_TRAIN -> {
+                return sparqlTrainInteraction;
+            }
+            case FHIR_TRAIN -> {
+                return fhirTrainInteraction;
+            }
+            default -> throw new RuntimeException("Unknown train type requested.");
+        }
     }
 }
