@@ -85,7 +85,7 @@ public class FHIRClient {
                     .builder()
                     .statusCode(response.getStatusCode())
                     .headers(response.getHeaders())
-                    .body(request.getBody())
+                    .body(response.getBody())
                     .build();
         }
         catch (WebClientException exception) {

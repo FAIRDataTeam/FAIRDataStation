@@ -32,7 +32,7 @@ import java.time.Duration;
 
 @Configuration
 public class WebClientConfig {
-    private static final long TIMEOUT = 5;
+    private static final long TIMEOUT = 5 * 60;
 
     @Bean
     public WebClient webClient() {
