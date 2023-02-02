@@ -1,24 +1,26 @@
 data-station:
-  fdp-url: http://fdp
+  fdp-url: ${FDS_FDP_URL:http://fdp}
   storages:
     triple-store:
       # valid repository type options {1 = inMemoryStore, 2 = NativeStore, 3 = AllegroGraph, 4 = graphDB, 5 = blazegraph}
-      type: 1
+      type: ${FDS_TRIPLE_STORE_TYPE:1}
       native:
-        dir: /tmp/fdp-store/
+        dir: ${FDS_TRIPLE_STORE_DIR:/tmp/fdp-store/}
       agraph:
-        url: http://localhost:10035/repositories/fdp
-        username: user
-        password: password
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:10035/repositories/fdp}
+        username: ${FDS_TRIPLE_STORE_USERNAME:user}
+        password: ${FDS_TRIPLE_STORE_PASSWORD:password}
       graphDb:
-        url: http://localhost:7200
-        repository: test
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:7200}
+        repository: ${FDS_TRIPLE_STORE_REPOSITORY:test}
+        username: ${FDS_TRIPLE_STORE_USERNAME:user}
+        password: ${FDS_TRIPLE_STORE_PASSWORD:password}
       blazegraph:
-        url: http://localhost:8888/blazegraph
-        repository:
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:8888/blazegraph}
+        repository: ${FDS_TRIPLE_STORE_REPOSITORY:test}
   apis:
     fhir:
-      base: https://fhir.res.hinq.nl/fhir/c4y-pgo-1/
+      base: ${FDS_FHIR_BASE_URL}
 
 
 spring:
@@ -32,9 +34,9 @@ spring:
     banner-mode: off
     web-application-type: reactive
   datasource:
-    url: jdbc:postgresql://postgres/fds
-    username: postgres
-    password: password
+    url: jdbc:postgresql://${FDS_POSTGRES_HOST:postgres}:${FDS_POSTGRES_PORT:5432}/${FDS_POSTGRES_DB:fds}
+    username: ${FDS_POSTGRES_USERNAME:postgres}
+    password: ${FDS_POSTGRES_PASSWORD:password}
   flyway:
     locations: classpath:db/migration
   jpa:
