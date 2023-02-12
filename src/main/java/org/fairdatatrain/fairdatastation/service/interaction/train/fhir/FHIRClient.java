@@ -52,6 +52,8 @@ import static java.util.Optional.ofNullable;
 @RequiredArgsConstructor
 public class FHIRClient {
 
+    private static final MediaType ACCEPT_TYPE = MediaType.valueOf("application/fhir+json");
+
     private final FHIRProperties fhirProperties;
 
     private final WebClient webClient;
@@ -65,12 +67,7 @@ public class FHIRClient {
     public FHIRResponse send(FHIRPreparedRequest request) {
         log.debug("Sending FHIR {} request: {}", request.getMethod().name(), request.getUri());
         try {
-            final ResponseEntity<String> response = webClient
-                    .method(request.getMethod())
-                    .uri(URI.create(request.getUri()))
-                    .headers(headers -> request.getHeaders().forEach(headers::set))
-                    .accept(MediaType.valueOf("application/fhir+json"))
-                    .acceptCharset(StandardCharsets.UTF_8)
+            final ResponseEntity<String> response = prepareRequestSpec(request, ACCEPT_TYPE)
                     .retrieve()
                     .toEntity(String.class)
                     .block();
@@ -105,6 +102,21 @@ public class FHIRClient {
         catch (JsonProcessingException exception) {
             throw new RuntimeException(exception);
         }
+    }
+
+    private WebClient.RequestBodySpec prepareRequestSpec(
+            FHIRPreparedRequest request, MediaType accept) {
+        final WebClient.RequestBodySpec spec = webClient
+                .method(request.getMethod())
+                .uri(URI.create(request.getUri()))
+                .headers(headers -> request.getHeaders().forEach(headers::set))
+                .accept(accept)
+                .acceptCharset(StandardCharsets.UTF_8);
+        if (request.getMethod().equals(HttpMethod.POST)
+                || request.getMethod().equals(HttpMethod.PUT)) {
+            spec.bodyValue(request.getBody());
+        }
+        return spec;
     }
 
     private FHIRPreparedRequest toPreparedRequest(FHIRRequest request) {

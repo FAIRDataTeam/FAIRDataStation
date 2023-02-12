@@ -166,6 +166,7 @@ public class FHIRTrainInteraction extends AbstractTrainInteraction implements IT
             return fhirClient.parseRequest(payload);
         }
         catch (Exception exception) {
+            exception.printStackTrace();
             throw new RuntimeException("Validation: Failed to parse FHIR request");
         }
     }
