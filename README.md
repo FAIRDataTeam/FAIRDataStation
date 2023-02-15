@@ -67,3 +67,7 @@ and [Security Policy](SECURITY.md).
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for more details.
+
+## Acknowledgments
+
+This code is based on work contucted across a number of projects, in particular C4yourself (funder: Health Holland—Top Sector Life Sciences and Health, grant number: LSHM 21044_C4YOUR- SELF) and Personal Genetic Locker (funder: Nederlandse Organisa- tie voor Wetenschappelijk Onderzoek, grant number: 628.011.022).
