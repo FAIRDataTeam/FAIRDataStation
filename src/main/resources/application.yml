@@ -60,6 +60,8 @@ springdoc:
     disable-swagger-default-url: true
     tags-sorter: alpha
     operations-sorter: alpha
+  webjars:
+    prefix: ''
 
 management:
   health:

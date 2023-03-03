@@ -4,7 +4,32 @@
 
 ## Usage
 
-*Documentation to be done*
+The recommended use is with Docker and Docker Compose and configuration via environment variables:
+
+```yml
+  fds:
+    image: fairdata/fairdatastation:latest
+    restart: unless-stopped
+    # ports:
+    #   - 127.0.0.1:8080:8080
+    depends_on:
+      - postgres
+    # volumes:
+    #   - ${PROJECT_ROOT}/application.fds.yml:/app/application.yml:ro
+    environment:
+      FDS_FDP_URL: http://fdp-client
+      FDS_POSTGRES_DB: ${POSTGRES_DB}
+      FDS_POSTGRES_USER: ${POSTGRES_USER}
+      FDS_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # FHIR endpoint (for FHIR Trains)
+      FDS_FHIR_BASE_URL: ${FHIR_API_BASE}
+      # Triple Store (for SPARQL Trains)
+      FDS_TRIPLE_STORE_TYPE: 4
+      FDS_TRIPLE_STORE_URL: ${GRAPHDB_URL}
+      FDS_TRIPLE_STORE_REPOSITORY: ${GRAPHDB_DATA_REPO}
+      FDS_TRIPLE_STORE_USERNAME: ${GRAPHDB_USERNAME}
+      FDS_TRIPLE_STORE_PASSWORD: ${GRAPHDB_PASSWORD}
+```
 
 ## Development
 
