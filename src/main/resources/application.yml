@@ -1,0 +1,79 @@
+data-station:
+  fdp-url: ${FDS_FDP_URL:http://fdp}
+  storages:
+    triple-store:
+      # valid repository type options {1 = inMemoryStore, 2 = NativeStore, 3 = AllegroGraph, 4 = graphDB, 5 = blazegraph}
+      type: ${FDS_TRIPLE_STORE_TYPE:1}
+      native:
+        dir: ${FDS_TRIPLE_STORE_DIR:/tmp/fdp-store/}
+      agraph:
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:10035/repositories/fdp}
+        username: ${FDS_TRIPLE_STORE_USERNAME:user}
+        password: ${FDS_TRIPLE_STORE_PASSWORD:password}
+      graphDb:
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:7200}
+        repository: ${FDS_TRIPLE_STORE_REPOSITORY:test}
+        username: ${FDS_TRIPLE_STORE_USERNAME:user}
+        password: ${FDS_TRIPLE_STORE_PASSWORD:password}
+      blazegraph:
+        url: ${FDS_TRIPLE_STORE_URL:http://localhost:8888/blazegraph}
+        repository: ${FDS_TRIPLE_STORE_REPOSITORY:test}
+  apis:
+    fhir:
+      base: ${FDS_FHIR_BASE_URL}
+
+
+spring:
+  application:
+    name: fair-data-station
+  task:
+    scheduling:
+      pool:
+        size: 2
+  main:
+    banner-mode: off
+    web-application-type: reactive
+  datasource:
+    url: jdbc:postgresql://${FDS_POSTGRES_HOST:postgres}:${FDS_POSTGRES_PORT:5432}/${FDS_POSTGRES_DB:fds}
+    username: ${FDS_POSTGRES_USERNAME:postgres}
+    password: ${FDS_POSTGRES_PASSWORD:password}
+  flyway:
+    locations: classpath:db/migration
+  jpa:
+    properties:
+      hibernate:
+        ddl-auto: validate
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+    tags-sorter: alpha
+    operations-sorter: alpha
+  webjars:
+    prefix: ''
+
+management:
+  health:
+    solr:
+      enabled:  false
+  info:
+    defaults:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health, info, gateway
+      cors:
+        allowed-origins: "*"
+        allowed-methods: "GET"

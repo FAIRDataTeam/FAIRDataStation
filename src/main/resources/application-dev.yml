@@ -1,0 +1,13 @@
+data-station:
+  fdp-url: http://localhost:8088
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost/fds
+    username: postgres
+    password: password
+  flyway:
+    locations: classpath:db/migration,classpath:dev/db/migration
+
+server:
+  port: 8082
