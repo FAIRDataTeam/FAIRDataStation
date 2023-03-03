@@ -37,7 +37,7 @@
 		<spring-cloud.version>2022.0.0</spring-cloud.version>
 		<lombok.version>1.18.26</lombok.version>
 		<springdoc.version>1.6.14</springdoc.version>
-		<postgresql.version>42.5.3</postgresql.version>
+		<postgresql.version>42.5.4</postgresql.version>
 		<rdf4j.version>4.2.3</rdf4j.version>
 
 		<!-- plugins -->
