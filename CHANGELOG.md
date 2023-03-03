@@ -7,9 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+
+## [0.1.0]
+
 ### Added
 
 - Initiated FAIR Data Station project
 
 
 [Unreleased]: /../../compare/master...develop
+[0.1.0]: /../../tree/v0.1.0
