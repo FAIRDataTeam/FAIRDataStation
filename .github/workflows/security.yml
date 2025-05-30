@@ -36,7 +36,8 @@ jobs:
         run: |
           mvn --version
 
-      - name: Initialize CodeQL
+      - # https://github.com/github/codeql-action
+        name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: 'java'
@@ -61,8 +62,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Perform Snyk Check (Maven)
-        uses: snyk/actions/maven@master
+      - # https://github.com/snyk/actions/tags
+        # note: snyk/actions only defines full major.minor.patch tags
+        name: Perform Snyk Check (Maven)
+        uses: snyk/actions/maven@0.4.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -86,7 +89,7 @@ jobs:
           docker build -t fdp:snyk-test -f Dockerfile .
 
       - name: Perform Snyk Check (Docker)
-        uses: snyk/actions/docker@master
+        uses: snyk/actions/docker@0.4.0
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
