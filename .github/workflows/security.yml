@@ -18,13 +18,15 @@ jobs:
       security-events: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - # https://github.com/actions/checkout
+        name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup Java
-        uses: actions/setup-java@v2
+      - # https://github.com/actions/setup-java
+        name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -34,7 +36,8 @@ jobs:
         run: |
           mvn --version
 
-      - name: Initialize CodeQL
+      - # https://github.com/github/codeql-action
+        name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: 'java'
@@ -57,10 +60,12 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Perform Snyk Check (Maven)
-        uses: snyk/actions/maven@master
+      - # https://github.com/snyk/actions/tags
+        # note: snyk/actions only defines full major.minor.patch tags
+        name: Perform Snyk Check (Maven)
+        uses: snyk/actions/maven@0.4.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
@@ -77,14 +82,14 @@ jobs:
     steps:
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Docker build
         run: |
           docker build -t fdp:snyk-test -f Dockerfile .
 
       - name: Perform Snyk Check (Docker)
-        uses: snyk/actions/docker@master
+        uses: snyk/actions/docker@0.4.0
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
