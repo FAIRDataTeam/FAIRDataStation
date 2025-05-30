@@ -22,45 +22,24 @@
  */
 package org.fairdatatrain.fairdatastation.acceptance.api.controller;
 
-import org.fairdatatrain.fairdatastation.acceptance.WebIntegrationTest;
-import org.fairdatatrain.fairdatastation.api.dto.root.RootInfoDTO;
-import org.junit.jupiter.api.DisplayName;
+import org.fairdatatrain.fairdatastation.api.controller.RootController;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseEntity;
-import java.net.URI;
+import org.springframework.test.web.reactive.server.WebTestClient;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-
-@DisplayName("GET /")
-public class RootControllerTests extends WebIntegrationTest {
-
-    private URI url(String path) {
-        return URI.create(path);
-    }
-
+public class RootControllerTests {
     @ParameterizedTest
     @ValueSource(strings = { "" , "/" })
-    public void res200(String path) {
-        // GIVEN:
-        RequestEntity<Void> request = RequestEntity
-                .get(url(path))
-                .build();
-        ParameterizedTypeReference<RootInfoDTO> responseType = new ParameterizedTypeReference<>() {
-        };
-
-        // WHEN:
-        ResponseEntity<RootInfoDTO> result = client.exchange(request, responseType);
-
-        // THEN:
-        assertThat(result.getStatusCode(), is(equalTo(HttpStatus.OK)));
-        assertThat(result.getBody(), is(notNullValue()));
-        assertThat(result.getBody().getFdpEndpoint(), is(notNullValue()));
-        assertThat(result.getBody().getTrainEndpoint(), is(notNullValue()));
+    public void shouldReturnRootObject(String path) {
+        RootController controller = new RootController();
+        WebTestClient client = WebTestClient.bindToController(controller).build();
+        client.get().uri(path)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$").isMap()
+                .jsonPath("$").isNotEmpty()
+                .jsonPath("$.fdpEndpoint").exists()
+                .jsonPath("$.trainEndpoint").exists();
     }
-
 }
