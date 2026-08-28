@@ -27,10 +27,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchPayloadDTO;
 import org.fairdatatrain.fairdatastation.api.dto.event.train.TrainDispatchResponseDTO;
+import org.fairdatatrain.fairdatastation.service.event.DispatchVerifier;
 import org.fairdatatrain.fairdatastation.service.event.TrainEventService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,15 +44,21 @@ public class TrainController {
 
     private final TrainEventService trainEventService;
 
+    private final DispatchVerifier dispatchVerifier;
+
     @PostMapping(
             path = "",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
     public TrainDispatchResponseDTO acceptTrain(
+            @RequestHeader(value = "X-FDT-Handler-Id", required = false) String handlerId,
+            @RequestHeader(value = "X-FDT-Timestamp", required = false) String timestamp,
+            @RequestHeader(value = "X-FDT-Signature", required = false) String signature,
             @Valid @RequestBody TrainDispatchPayloadDTO reqDto
     ) {
-        // TODO: check/store origin? filtering?
+        // Authenticate the dispatching handler before queueing the train.
+        dispatchVerifier.verify(handlerId, timestamp, signature, reqDto);
         return trainEventService.acceptTrain(reqDto);
     }
 }

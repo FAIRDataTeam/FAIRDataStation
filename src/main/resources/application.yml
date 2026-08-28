@@ -1,5 +1,12 @@
 data-station:
   fdp-url: ${FDS_FDP_URL:http://fdp}
+  # Authentication of incoming train dispatches. When enabled, POST /trains is
+  # only accepted from a handler on allowed-handlers with a valid Ed25519
+  # signature. Populate allowed-handlers via the mounted config / env.
+  dispatch:
+    enabled: ${FDS_DISPATCH_ENABLED:false}
+    max-clock-skew-seconds: ${FDS_DISPATCH_MAX_SKEW:300}
+    allowed-handlers: []
   storages:
     triple-store:
       # valid repository type options {1 = inMemoryStore, 2 = NativeStore, 3 = AllegroGraph, 4 = graphDB, 5 = blazegraph}
