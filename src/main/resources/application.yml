@@ -7,6 +7,16 @@ data-station:
     enabled: ${FDS_DISPATCH_ENABLED:false}
     max-clock-skew-seconds: ${FDS_DISPATCH_MAX_SKEW:300}
     allowed-handlers: []
+  # Authorization policy for the queries a train may run against this station.
+  # On by default (read-only, no federation); set FDS_POLICY_ENABLED=false to opt out.
+  policy:
+    enabled: ${FDS_POLICY_ENABLED:true}
+    sparql:
+      allow-updates: ${FDS_POLICY_ALLOW_UPDATES:false}
+      allow-federation: ${FDS_POLICY_ALLOW_FEDERATION:false}
+      max-query-length: ${FDS_POLICY_MAX_QUERY_LENGTH:100000}
+      allowed-query-types: [SELECT, ASK, CONSTRUCT, DESCRIBE]
+      denied-patterns: []
   storages:
     triple-store:
       # valid repository type options {1 = inMemoryStore, 2 = NativeStore, 3 = AllegroGraph, 4 = graphDB, 5 = blazegraph}

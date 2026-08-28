@@ -27,8 +27,6 @@ import nl.dtls.fairdatapoint.vocabulary.FDT;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.query.QueryLanguage;
-import org.eclipse.rdf4j.query.parser.ParsedOperation;
-import org.eclipse.rdf4j.query.parser.ParsedUpdate;
 import org.eclipse.rdf4j.query.parser.QueryParserUtil;
 import org.fairdatatrain.fairdatastation.data.model.enums.JobStatus;
 import org.fairdatatrain.fairdatastation.data.model.event.Job;
@@ -40,6 +38,7 @@ import org.fairdatatrain.fairdatastation.service.interaction.entity.InteractionA
 import org.fairdatatrain.fairdatastation.service.interaction.fetch.TrainFetcher;
 import org.fairdatatrain.fairdatastation.service.interaction.train.AbstractTrainInteraction;
 import org.fairdatatrain.fairdatastation.service.interaction.train.ITrainInteraction;
+import org.fairdatatrain.fairdatastation.service.policy.QueryPolicyService;
 import org.fairdatatrain.fairdatastation.service.storage.TripleStoreStorage;
 import org.springframework.stereotype.Service;
 
@@ -54,16 +53,20 @@ public class SPARQLTrainInteraction extends AbstractTrainInteraction implements 
 
     private final TripleStoreStorage tripleStoreStorage;
 
+    private final QueryPolicyService queryPolicyService;
+
     public SPARQLTrainInteraction(
             BasicAccessControlService accessControlService,
             JobEventService jobEventService,
             JobArtifactService jobArtifactService,
             JobService jobService,
             TrainFetcher trainFetcher,
-            TripleStoreStorage tripleStoreStorage
+            TripleStoreStorage tripleStoreStorage,
+            QueryPolicyService queryPolicyService
     ) {
         super(accessControlService, jobEventService, jobArtifactService, jobService, trainFetcher);
         this.tripleStoreStorage = tripleStoreStorage;
+        this.queryPolicyService = queryPolicyService;
     }
 
     @Override
@@ -91,6 +94,10 @@ public class SPARQLTrainInteraction extends AbstractTrainInteraction implements 
             sendInfo(job, "Validation: Validating train payload");
             validateSparqlQuery(sparqlQuery);
             sendInfo(job, "Validation: Train payload validated");
+
+            sendInfo(job, "Policy: Authorizing query against station policy");
+            queryPolicyService.authorizeSparql(sparqlQuery);
+            sendInfo(job, "Policy: Query authorized");
 
             sendInfo(job, "Access Control: Requesting access to Triple Store");
             checkAccess();
@@ -129,13 +136,11 @@ public class SPARQLTrainInteraction extends AbstractTrainInteraction implements 
     }
 
     private void validateSparqlQuery(String sparqlQuery) {
-        // parse and check non-updating
+        // Parse for syntactic validity only. Authorization decisions (read-only,
+        // federation, etc.) are owned by QueryPolicyService so they are governed
+        // by one configurable authority.
         try {
-            final ParsedOperation operation =
-                    QueryParserUtil.parseOperation(QueryLanguage.SPARQL, sparqlQuery, null);
-            if (operation instanceof ParsedUpdate) {
-                throw new RuntimeException("Validation: SPARQL Query not valid (update query)");
-            }
+            QueryParserUtil.parseOperation(QueryLanguage.SPARQL, sparqlQuery, null);
         }
         catch (Exception exception) {
             throw new RuntimeException(format("Validation: SPARQL Query not valid (%s)",
