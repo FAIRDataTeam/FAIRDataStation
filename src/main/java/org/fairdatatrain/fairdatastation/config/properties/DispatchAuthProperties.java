@@ -35,7 +35,8 @@ import java.util.List;
  * Controls authentication of incoming train dispatches. When {@code enabled} is
  * true, the station only accepts a dispatch that is signed by a handler listed
  * in {@code allowedHandlers}; otherwise the endpoint stays open (legacy
- * behaviour). The allow-list maps a handler identity to its Ed25519 public key.
+ * behaviour). The allow-list maps a handler identity to its Ed25519 public key
+ * and, optionally, to the destinations its callbacks may target.
  */
 @NoArgsConstructor
 @AllArgsConstructor
@@ -49,6 +50,11 @@ public class DispatchAuthProperties {
 
     // Allowed difference between the signed timestamp and now, to limit replay.
     private long maxClockSkewSeconds = 300;
+
+    // Refuse a dispatch from a handler that declares no allowedCallbackHosts.
+    // Off by default so existing allow-lists keep working; turn it on to make
+    // "results may only be delivered to a declared destination" mandatory.
+    private boolean requireCallbackAllowList = false;
 
     // Trusted handlers permitted to dispatch trains to this station.
     private List<AllowedHandler> allowedHandlers = new ArrayList<>();
@@ -74,6 +80,17 @@ public class DispatchAuthProperties {
 
         // Base64-encoded X.509 (SubjectPublicKeyInfo) Ed25519 public key.
         private String publicKey;
+
+        // Destinations this handler's callback URLs may name, as "host",
+        // "host:port", or "*.suffix". The callback locations are handler-attested
+        // (they are inside the signed canonical string), so without this a
+        // compromised handler can direct result artifacts anywhere. Empty means
+        // unconstrained unless requireCallbackAllowList is set.
+        private List<String> allowedCallbackHosts = new ArrayList<>();
+
+        public boolean hasCallbackAllowList() {
+            return !allowedCallbackHosts.isEmpty();
+        }
 
     }
 }

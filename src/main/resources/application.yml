@@ -6,7 +6,26 @@ data-station:
   dispatch:
     enabled: ${FDS_DISPATCH_ENABLED:false}
     max-clock-skew-seconds: ${FDS_DISPATCH_MAX_SKEW:300}
+    # Refuse a dispatch from a handler that declares no allowed-callback-hosts.
+    # Off by default so existing allow-lists keep working; a handler entry may
+    # carry allowed-callback-hosts: [host, host:port, "*.suffix"] to constrain
+    # where its results may be delivered.
+    require-callback-allow-list: ${FDS_DISPATCH_REQUIRE_CALLBACK_ALLOW_LIST:false}
     allowed-handlers: []
+  # Bounds on the outbound requests made while resolving a train. The URIs come
+  # from the dispatching handler, so they are attacker-influenced.
+  fetch:
+    enabled: ${FDS_FETCH_GUARD_ENABLED:true}
+    # Loopback and link-local are refused by default: no train URI legitimately
+    # names one, and 169.254.169.254 is the cloud instance-metadata endpoint.
+    allow-loopback-addresses: ${FDS_FETCH_ALLOW_LOOPBACK:false}
+    # Private ranges stay reachable by default because the reference compose
+    # deployment puts the FAIR Data Point on a container network. Set false in
+    # production and pair it with an explicit allowed-hosts list.
+    allow-private-addresses: ${FDS_FETCH_ALLOW_PRIVATE:true}
+    max-bytes: ${FDS_FETCH_MAX_BYTES:16777216}
+    allowed-schemes: [http, https]
+    allowed-hosts: []
   # Signing of outgoing job event / artifact callbacks, so the handler can
   # authenticate this station's results. Off by default because it requires the
   # handler to hold this station's public key (station.public_key).
