@@ -22,11 +22,14 @@
  */
 package org.fairdatatrain.fairdatastation.config;
 
+import org.fairdatatrain.fairdatastation.service.interaction.fetch.FetchGuard;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClientResponse;
 
 import java.time.Duration;
 
@@ -43,5 +46,49 @@ public class WebClientConfig {
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(client))
                 .build();
+    }
+
+    /**
+     * The client used to fetch train and payload documents, whose URIs are
+     * supplied by a dispatching handler.
+     *
+     * <p>It differs from {@link #webClient()} in two ways that matter, and both
+     * exist because the target is chosen by the caller rather than by this
+     * station. Redirects are re-checked hop by hop: a guard that only inspects
+     * the URI it was given is defeated by a permitted host answering
+     * {@code 302 Location: http://169.254.169.254/}, so the destination of every
+     * hop must pass the same test as the first. And the response body is bounded
+     * by the codec, so an over-sized document is refused while being read rather
+     * than after it has already been held in memory.
+     */
+    @Bean
+    public WebClient trainFetchWebClient(FetchGuard fetchGuard) {
+        final HttpClient client = HttpClient.create()
+                .followRedirect((request, response) -> {
+                    return redirectPermitted(fetchGuard, response);
+                })
+                .responseTimeout(Duration.ofSeconds(TIMEOUT));
+
+        final WebClient.Builder builder = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(client));
+
+        final long maxBytes = fetchGuard.maxBytes();
+        if (maxBytes > 0 && maxBytes <= Integer.MAX_VALUE) {
+            builder.codecs(codecs -> {
+                codecs.defaultCodecs().maxInMemorySize((int) maxBytes);
+            });
+        }
+        return builder.build();
+    }
+
+    private boolean redirectPermitted(FetchGuard fetchGuard, HttpClientResponse response) {
+        final String location = response.responseHeaders().get(HttpHeaders.LOCATION);
+        if (location == null) {
+            return false;
+        }
+        // Throws FetchNotPermittedException, which surfaces as the job's failure
+        // reason, rather than silently declining to follow.
+        fetchGuard.checkRedirectPermitted(location);
+        return true;
     }
 }

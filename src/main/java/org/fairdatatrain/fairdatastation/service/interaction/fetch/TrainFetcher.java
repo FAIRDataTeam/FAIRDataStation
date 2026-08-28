@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,15 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 import static org.fairdatatrain.fairdatastation.utils.RdfUtils.read;
 
+/**
+ * Fetches the train and payload documents a dispatch refers to.
+ *
+ * <p>Every URI reaching this class is attacker-influenced — it comes from the
+ * dispatching handler, or from metadata that was itself fetched from one — so
+ * each request passes {@link FetchGuard} before it is made and its body is
+ * bounded after it is read. Without that, an unauthenticated GET of an arbitrary
+ * URI gives a caller request-forgery reach into the station's network.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -51,7 +61,13 @@ public class TrainFetcher {
     private static final String MSG_FAIL = "Request to '%s' failed";
     private static final String MSG_ERROR = "HTTP request failed";
 
-    private final WebClient webClient;
+    // The redirect-checking, size-bounded client, not the shared one. Named to
+    // match the bean as well as qualified, so resolution cannot quietly fall
+    // back to the unguarded WebClient.
+    @Qualifier("trainFetchWebClient")
+    private final WebClient trainFetchWebClient;
+
+    private final FetchGuard fetchGuard;
 
     public Model fetchTrainMetadata(String trainUri) {
         return fetchModel(trainUri);
@@ -67,40 +83,35 @@ public class TrainFetcher {
 
     @SneakyThrows
     public Model fetchModel(String uri) {
-        log.info(format(MSG_MKRQ, uri));
-        try {
-            final String response = webClient
-                    .get()
-                    .uri(URI.create(uri))
-                    .accept(MediaType.parseMediaType(RDFFormat.TURTLE.getDefaultMIMEType()))
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-            log.info(format(MSG_RCV, uri));
-            final Model result = read(response, uri, RDFFormat.TURTLE);
-            log.info(format(MSG_PARSE, uri));
-            return result;
-        }
-        catch (WebClientException exception) {
-            log.info(format(MSG_FAIL, uri));
-            throw new HttpClientErrorException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    ofNullable(exception.getMessage()).orElse(MSG_ERROR)
-            );
-        }
+        final String response = fetch(
+                uri, MediaType.parseMediaType(RDFFormat.TURTLE.getDefaultMIMEType()));
+        final Model result = read(response, uri, RDFFormat.TURTLE);
+        log.info(format(MSG_PARSE, uri));
+        return result;
     }
 
     @SneakyThrows
     public String fetchStringData(String uri) {
+        return fetch(uri, MediaType.TEXT_PLAIN);
+    }
+
+    /**
+     * The single outbound GET. The guard runs before the request is issued and
+     * the size cap after the body is read, since a remote Content-Length is a
+     * claim rather than a limit.
+     */
+    private String fetch(String uri, MediaType accept) {
+        fetchGuard.checkPermitted(uri);
         log.info(format(MSG_MKRQ, uri));
         try {
-            final String response = webClient
+            final String response = trainFetchWebClient
                     .get()
                     .uri(URI.create(uri))
-                    .accept(MediaType.TEXT_PLAIN)
+                    .accept(accept)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
+            fetchGuard.checkSize(uri, response == null ? 0 : response.length());
             log.info(format(MSG_RCV, uri));
             return response;
         }
