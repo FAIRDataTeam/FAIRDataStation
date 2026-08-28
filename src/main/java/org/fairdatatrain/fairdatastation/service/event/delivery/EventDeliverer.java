@@ -57,13 +57,23 @@ public class EventDeliverer {
 
     private final WebClient webClient;
 
+    private final CallbackSigner callbackSigner;
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void deliver(JobArtifact jobArtifact, EventDelivery eventDelivery) {
         log.debug("Delivering job artifact {}", jobArtifact.getUuid());
         final JobArtifactDispatchDTO dto = jobArtifactService
                 .getMapper()
                 .toDispatchDTO(jobArtifact);
-        deliver(eventDelivery, jobArtifact.getJob().getCallbackArtifact(), dto);
+        deliver(
+                eventDelivery,
+                jobArtifact.getJob().getCallbackArtifact(),
+                dto,
+                callbackSigner.isEnabled()
+                        ? callbackSigner.signArtifact(
+                                jobArtifact.getJob().getRemoteId(), dto)
+                        : null
+        );
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -72,13 +82,26 @@ public class EventDeliverer {
         final JobEventDispatchDTO dto = jobEventService
                 .getMapper()
                 .toDispatchDTO(jobEvent);
-        deliver(eventDelivery, jobEvent.getJob().getCallbackEvent(), dto);
+        deliver(
+                eventDelivery,
+                jobEvent.getJob().getCallbackEvent(),
+                dto,
+                callbackSigner.isEnabled()
+                        ? callbackSigner.signEvent(
+                                jobEvent.getJob().getRemoteId(), dto)
+                        : null
+        );
     }
 
-    protected void deliver(EventDelivery eventDelivery, String uri, Object payload) {
+    protected void deliver(
+            EventDelivery eventDelivery,
+            String uri,
+            Object payload,
+            CallbackSigner.SignedHeaders signature
+    ) {
         final Timestamp dispatchedAt = now();
         try {
-            dispatch(uri, payload);
+            dispatch(uri, payload, signature);
             eventDeliveryService.updateSuccess(eventDelivery, dispatchedAt);
         }
         catch (Exception exception) {
@@ -89,13 +112,23 @@ public class EventDeliverer {
         }
     }
 
-    private void dispatch(String uri, Object payload) {
+    private void dispatch(String uri, Object payload, CallbackSigner.SignedHeaders signature) {
         log.debug("Dispatching payload to {}", uri);
         try {
             webClient
                     .post()
                     .uri(uri)
                     .contentType(MediaType.APPLICATION_JSON)
+                    .headers(headers -> {
+                        if (signature != null) {
+                            headers.set(CallbackSigner.HEADER_ID, signature.identity());
+                            headers.set(
+                                    CallbackSigner.HEADER_TIMESTAMP,
+                                    Long.toString(signature.timestamp())
+                            );
+                            headers.set(CallbackSigner.HEADER_SIGNATURE, signature.signature());
+                        }
+                    })
                     .bodyValue(payload)
                     .retrieve()
                     .bodyToMono(String.class)

@@ -7,6 +7,13 @@ data-station:
     enabled: ${FDS_DISPATCH_ENABLED:false}
     max-clock-skew-seconds: ${FDS_DISPATCH_MAX_SKEW:300}
     allowed-handlers: []
+  # Signing of outgoing job event / artifact callbacks, so the handler can
+  # authenticate this station's results. Off by default because it requires the
+  # handler to hold this station's public key (station.public_key).
+  callback:
+    enabled: ${FDS_CALLBACK_SIGNING_ENABLED:false}
+    identity: ${FDS_CALLBACK_SIGNING_IDENTITY:}
+    private-key: ${FDS_CALLBACK_SIGNING_PRIVATE_KEY:}
   # Authorization policy for the queries a train may run against this station.
   # On by default (read-only, no federation); set FDS_POLICY_ENABLED=false to opt out.
   policy:

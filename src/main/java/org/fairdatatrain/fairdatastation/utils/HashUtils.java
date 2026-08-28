@@ -22,8 +22,32 @@
  */
 package org.fairdatatrain.fairdatastation.utils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class HashUtils {
     private static final int MASK = 0xff;
+
+    private static final String SHA256 = "SHA-256";
+
+    /**
+     * Hex-encoded SHA-256 of a (possibly null) string. Used to fold free-text
+     * fields into a signed canonical string: the digest cannot contain the field
+     * separator, so no field value can forge a canonical form belonging to
+     * another message.
+     */
+    public static String sha256Hex(String value) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance(SHA256);
+            final byte[] bytes = (value == null ? "" : value)
+                    .getBytes(StandardCharsets.UTF_8);
+            return bytesToHex(digest.digest(bytes));
+        }
+        catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 hashing is not supported", exception);
+        }
+    }
 
     public static String bytesToHex(byte[] hash) {
         final StringBuilder hexString = new StringBuilder(2 * hash.length);
